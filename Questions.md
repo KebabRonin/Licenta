@@ -10,3 +10,10 @@
 Too few inputs?
 
 Unclean data? (somewhere from kaggle, can't find it now)
+
+
+
+
+EM simultan si std/mean separat
+* pb 18 de la cap. Clusterizare
+* cu 2 etape separate (MLE - pb 50, 51 de la fundamente) urmat de EM curent (simplu, calc doar omega)

@@ -16,6 +16,8 @@
 * Explainable Neural net
 * Has fast torch implementations (would have to implement plotting again for diagrams)
 * Is easily fine-grained
+* bias towards symbolic, smooth, formulas
+* must have input/output domain in \[0, 1]
 
 ## 4. [ResNet (Conv)](PDF/2023-ResNet-ensamble.pdf)
 
@@ -25,6 +27,7 @@
 * try boosting?
 
 ## 7. Seq2seq (aka. Transformer)
+
 
 
 ## Reviewed but not directly applicable:
