@@ -4,7 +4,7 @@ from my_utils import *
 from torchmetrics.regression import R2Score
 from torch.nn import L1Loss
 sys.stdout.reconfigure(encoding='utf-8')
-batch_size = 5
+batch_size = 100
 
 
 train_data = pl.scan_parquet("Dataset/train/v1/train_*.parquet", n_rows=batch_size).drop("sample_id").collect()
@@ -75,12 +75,12 @@ class EMRegressor:
 		print(f"{self.final_pred=}")
 		return self.final_pred
 
-	def Estep(self):
+	def Estep(self, dout):
 		mulw = (self.predictions[None, :, :] * self.weights).squeeze(axis=0)
 		other = mulw[:, :, None].squeeze(axis=2) # prepare for elementwise division
 		fp = self.final_pred[:, :, np.newaxis]   # prepare for elementwise division
 		print(f"{mulw.shape=}, {other.shape=}, {fp.shape=}")
-		self.z = other / fp
+		self.z = other / dout[:, :, np.newaxis]  # fp
 		print(f"EStep {self.z.shape=}")
 		print(f"{self.z=}")
 
@@ -96,14 +96,14 @@ class EMRegressor:
 		# self.predict(data_in) # updates self.prediction matrix (samples x output features x models)
 		for i in range(n_iters):
 			self.predict(data_in) # updates self.prediction matrix (samples x output features x models)
-			self.Estep()
+			self.Estep(data_out)
 			self.Mstep()
 			print(f"Iter {i+1:>3} weights:\n{self.weights[:20, :].T}")
 
 with torch.no_grad():
 	EM_en = EMRegressor([ConstantModel("average", 1), ConstantModel("average2", 2), TorchModel("MLP", "model.pt")])
 
-	EM_en.train(train_in.to_numpy(), train_out.to_numpy(), n_iters=4)
+	EM_en.train(train_in.to_numpy(), train_out.to_numpy(), n_iters=20)
 
 	val_data = pl.scan_parquet("Dataset/train/v1/train_40.parquet", n_rows=batch_size).drop("sample_id").collect()
 	v_in  = torch.tensor(train_data.select(pl.col(in_vars )).to_numpy())
