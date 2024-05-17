@@ -1,0 +1,11 @@
+{
+  "tldraw:new-tldraw-file-new-tab": [
+    {
+      "modifiers": [
+        "Mod",
+        "Shift"
+      ],
+      "key": "D"
+    }
+  ]
+}

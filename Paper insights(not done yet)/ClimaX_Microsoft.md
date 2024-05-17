@@ -1,0 +1,1 @@
+Creates a general-purpose "base" model, which extracts embeddings of various metrics, and as such can be used with various datasets, as the model is not based on a set number/type of input variables.

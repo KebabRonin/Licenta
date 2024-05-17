@@ -1,0 +1,22 @@
+--*> Prev (threading, dubious mini-batching):
+Nice=0.00783240
+--*> Shuffle (threading, dubious mini-batching):
+Nice=0.002040771949291229
+Actual=-0.3315
+--*> More-minis (threading, ??? batches):
+--*> More-minis-shuffle (threading, ??? batches, shuffle):
+*Nice*: 0.002179525405168533
+Actual: -0.3429709629714489
+
+
+12 May 11:31
+*Nice*: 0.001870283281803131
+Actual: -0.18131977690458298
+
+12 May 12:04
+*Nice*: 0.007463597309589386
+Actual: -0.10269694722890854
+
+12 May 13:31
+*Nice*: 0.008930862325429917
+Actual: -0.08658309167027474
