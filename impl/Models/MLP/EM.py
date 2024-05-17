@@ -7,7 +7,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 batch_size = 100
 
 
-train_data = pl.scan_parquet("Dataset/train/v1/train_*.parquet", n_rows=batch_size).drop("sample_id").collect()
+train_data = pl.scan_parquet("train_ex.parquet").drop("sample_id").collect()#("Dataset/train/v1/train_*.parquet", n_rows=batch_size).drop("sample_id").collect()
 train_in  = train_data.select(pl.col(in_vars ))
 train_out = train_data.select(pl.col(out_vars))
 in_len=556
@@ -114,5 +114,5 @@ with torch.no_grad():
 	print("r2:", r2score(pred, v_out))
 	for i in range(3):
 		print(i, "r2", r2score(EM_en.predictions[:,:,i].squeeze(), v_out))
-	# print("mae:", maescore(pred, v_out))
+	print("mae:", maescore(torch.tensor(pred), v_out))
 
