@@ -5,6 +5,8 @@
 
 > Current sim physics are not good enough:
 >> Thus, in most GCMs, in addition to parameterized cloud micro- physics, convection and its influence on atmospheric circulation are represented by convective parameterization schemes, which are usually based on **simplified theories, limited obser- vations, and empirical relationships**
->> [[gmd-15-3923-2022.pdf#page=2&selection=31,46,36,36|gmd-15-3923-2022, page 2]]
+>> [[other_resnet.pdf#page=2&selection=31,46,36,36|gmd-15-3923-2022, page 2]]
  
 Too few inputs?
+
+Unclean data? (somewhere from kaggle, can't find it now)

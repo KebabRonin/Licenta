@@ -14,6 +14,6 @@ SPCAM - current simulator
 [ML, catboost, xgboost yt video](https://www.youtube.com/watch?v=o7cUF25hAbo)
 [RN slide-uri curs](https://gdt050579.github.io/rn_course_fii/courses)
 
-#### [Kolmogorov-Arnold Networks](https://arxiv.org/abs/2404.19756)
+#### [Kolmogorov-Arnold Networks](PDF/KAN.pdf)
 New type of MLP
 [Video1](https://www.youtube.com/watch?v=3XAW0kqbH2Q), [Video2](https://www.youtube.com/watch?v=CkCijaXqAOM)

@@ -40,7 +40,7 @@ data_insights = json.load(open('data_insights.json'))
 
 
 # === PARAMS ===
-nr_batches = 40
+nr_batches = 15
 batch_size = 20_000
 # iters_per_batch = 7
 epochs=25

@@ -4,16 +4,19 @@
     "type": "split",
     "children": [
       {
-        "id": "7d266e5c513ea254",
+        "id": "8e1cb3532dd768ac",
         "type": "tabs",
         "children": [
           {
-            "id": "034536096b62b91a",
+            "id": "6abb345abb57a2d9",
             "type": "leaf",
             "state": {
-              "type": "pdf",
+              "type": "markdown",
               "state": {
-                "file": "PDF/2021 - Use of Neural Networks for Stable  Accurate and Physically Consistent.pdf"
+                "file": "Presentation.md",
+                "mode": "source",
+                "backlinks": true,
+                "source": false
               }
             }
           }
@@ -83,7 +86,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "PDF/2021 - Use of Neural Networks for Stable  Accurate and Physically Consistent.pdf",
+                "file": "Presentation.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -100,7 +103,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "PDF/2021 - Use of Neural Networks for Stable  Accurate and Physically Consistent.pdf",
+                "file": "Presentation.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -123,7 +126,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "PDF/2021 - Use of Neural Networks for Stable  Accurate and Physically Consistent.pdf"
+                "file": "Presentation.md"
               }
             }
           }
@@ -148,19 +151,30 @@
       "tldraw:Create new tldrawing": false
     }
   },
-  "active": "b988d58596e41863",
+  "active": "6abb345abb57a2d9",
   "lastOpenFiles": [
-    "PDF/bams-bams-84-11-1547.pdf",
-    "PDF/2013 - Randall - Beyond deadlock.pdf",
+    "impl/model_checkpoint_17-May-2024-14-55-24.pt",
+    "Questions.md",
+    "Tools.md",
+    "References.md",
+    "impl/model_checkpoint_17-May-2024-14-48-35.pt",
+    "Presentation.md",
+    "PDF/problem_history_and_preds2003.pdf",
     "PDF/problem_history_2004.pdf",
-    "PDF/2023 - Han - An Ensemble of Neural Networks for Moist Physics Processes  Its Generalizability and.pdf",
-    "PDF/gmd-15-3923-2022.pdf",
-    "PDF/ClimaX_Microsoft.pdf",
+    "PDF/other_resnet.pdf",
     "PDF/2022Correcting Coarse‐Grid Weather and Climate Models by Machine Learning From.pdf",
-    "PDF/Misc/handout12.pdf",
-    "impl/model_checkpoint_17-May-2024-13-42-37.pt",
-    "impl/obsidian/PDF/Misc/What is Super-Parameterization_ _ Walter Hannah.pdf",
-    "impl/obsidian/PDF/Misc/handout12.pdf",
+    "PDF/2023-ResNet-ensamble.pdf",
+    "impl/model.pt",
+    "impl/model_checkpoint_17-May-2024-14-36-56.pt",
+    "PDF/ClimaX_Microsoft.pdf",
+    "PDF/DeepPhysNet.pdf",
+    "PDF/KAN.md",
+    "Ideas.md",
+    "Glossary.md",
+    "Paper insights(not done yet)/DeepPhysNet.md",
+    "Paper insights(not done yet)/ClimSim.md",
+    "Paper insights(not done yet)/ClimaX_Microsoft.md",
+    "Paper insights(not done yet)/CatBoost.md",
     "impl/obsidian/Paper insights(not done yet)/DeepPhysNet.md",
     "impl/obsidian/Paper insights(not done yet)/ClimSim.md",
     "impl/obsidian/Paper insights(not done yet)/ClimaX_Microsoft.md",
@@ -168,20 +182,10 @@
     "impl/obsidian/Tools.md",
     "impl/obsidian/Glossary.md",
     "impl/obsidian/tldraw/Tldraw 2024-05-05 6.49PM.md",
-    "Paper insights(not done yet)/ClimaX_Microsoft.md",
-    "Tools.md",
-    "References.md",
     "impl/fig.png",
     "impl/README.md",
-    "Ideas.md",
-    "Paper insights(not done yet)/ClimSim.md",
-    "Paper insights(not done yet)/CatBoost.md",
-    "Presentation.md",
     "Pasted image 20240507173228.png",
     "Pasted image 20240507173225.png",
-    "Glossary.md",
-    "Questions.md",
-    "Paper insights(not done yet)/DeepPhysNet.md",
     "tldraw/Tldraw 2024-05-05 6.49PM.md",
     "impl/figs/state_q0001_43.png",
     "impl/figs/state_q0001_42.png",
