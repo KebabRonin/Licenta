@@ -34,8 +34,8 @@
 	* (Sounds like boosting)
 	*  ***Nudging*** the outputs closer to their actual values (from ground truth observation) during runs
 	* Use ML to learn the nudge tendencies and apply them to the coarse-grained model (to correct it)
-	* Train different Neural Nets for each target feature set (so hyperparams can be optimized accordingly)
-	* Train multiple NNs for the same target and average the means
+	* **Train different Neural Nets for each target feature set (so hyperparams can be optimized accordingly)**
+	* **Train multiple NNs for the same target and average the means**
 	* Requires time data
 * [Could Machine Learning Break the Convection Parameterization Deadlock?](https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/2018GL078202)
 	* An early implementation of ClimSim NN
