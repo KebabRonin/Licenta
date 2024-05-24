@@ -4,3 +4,5 @@ Models/MLP/Saved
 *.pickle
 *.parquet
 __pycache__
+fast-kan
+faster-kan

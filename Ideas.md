@@ -7,3 +7,6 @@ EM for XGBoost, NN, CNN, all baselines
 MLP with X neurons for each of Y activation functions
 
 To do: useable Dataset/v2
+
+
+make gmr library work with cuda (cuPy or torch)
