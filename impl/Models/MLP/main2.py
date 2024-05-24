@@ -40,16 +40,18 @@ data_insights = json.load(open('data_insights.json'))
 
 
 # === PARAMS ===
-nr_batches = 10
-batch_size = 27_500
-iters_per_batch = 10
+nr_batches = 500
+batch_size = 5_000
+iters_per_batch = 1
 # none, +mean or +mean/std
-normalization = "none"
+normalization = "+mean/std"
+CHECKPOINT_INTERVAL = 50
 
 # loss_function = R2Score(num_outputs=368).to(DEVICE)
-loss_function = torch.nn.MSELoss().to(DEVICE)
+loss_function = torch.nn.L1Loss().to(DEVICE)
 # optimizer = torch.optim.Adadelta(model.parameters(), lr = 1e-3, maximize=True)
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, foreach=False, amsgrad=True) #, maximize=True)
+optimizer = torch.optim.RAdam(model.parameters(), lr=1e-4) #, maximize=True)
+# optimizer = torch.optim.Adadelta()
 # optimizer = torch.optim.SGD(model.parameters(), lr=1e-3, momentum=0.8, nesterov=True)
 
 print_box(	f'Loss: {type(loss_function).__name__}',
@@ -65,41 +67,29 @@ _pbar_display_ncols = 100
 print(model)
 
 
-init_err, finl_err = [], []
-
 def train_batch(xs:torch.Tensor, ys:torch.Tensor, iters=1, name="train"):
-	global init_err, finl_err
 
 	pbar = trange(iters, ncols=_pbar_display_ncols, position=1, leave=True, miniters=1, ascii=" 123456789@", desc=f"<{time.strftime('%H:%M')}> [{name[0]:02}] ({name[1]:2}) {name[2]:>6}")
-	is_first = True
 	for _ in pbar:
 		optimizer.zero_grad(set_to_none=True)
 		pred = model(xs)
 		loss = loss_function(pred, ys)
 		loss.backward()
 		optimizer.step()
-		pbar.set_postfix_str(f"{loss.item():.10f}")
-		if is_first:
-			is_first = False
-			init_err.append(loss.item())
+		pbar.set_postfix_str(f"{loss.item():.10f}", refresh=False)
 	del xs, ys
-	finl_err.append(loss.item())
-	torch.save(model, f"model_checkpoint_{time.strftime('%d-%b-%Y-%H-%M-%S')}.pt", pickle_module=cloudpickle)
+	if name[0] % CHECKPOINT_INTERVAL == CHECKPOINT_INTERVAL - 1:
+		torch.save(model, f"model_checkpoint_{time.strftime('%d-%b-%Y-%H-%M-%S')}.pt", pickle_module=cloudpickle)
 
 def read_data(data: pl.LazyFrame, offset: int, batch_size):
-	# t0 = time.time()
 	batch = data.slice(offset=offset, length=batch_size).collect()
 
 	train_in = normalize_subset(batch,  in_vars, method=normalization).to_numpy()
 	train_out = normalize_subset(batch,  out_vars, method=normalization).to_numpy()
 
-	# train_in  = torch.tensor(train_in, device=DEVICE)
-	# train_out = torch.tensor(train_out, device=DEVICE)
+	train_in  = torch.tensor(train_in, device=DEVICE)
+	train_out = torch.tensor(train_out, device=DEVICE)
 
-	# t1 = time.time()
-	# print(f"Read start ({offset}): {time.strftime('%H:%M:%S', time.localtime(t0))}")
-	# print(f"Read end   ({offset}): {time.strftime('%H:%M:%S', time.localtime(t1))}")
-	# print(f"Read     : {int(t1-t0)//60:02}:{(t1-t0)%60:05.2f}s")
 	return train_in, train_out
 
 def main():
@@ -115,13 +105,12 @@ def main():
 		train_in, train_out = read_data(data, offset, batch_size)
 
 		if th:
-			plott(init_err, finl_err)
 			gc.collect()
 			# print("Waiting for GPU model train to finish")
 			th.join()
 
-		train_in  = torch.tensor(train_in, device=DEVICE)
-		train_out = torch.tensor(train_out, device=DEVICE)
+		# train_in  = torch.tensor(train_in, device=DEVICE)
+		# train_out = torch.tensor(train_out, device=DEVICE)
 
 		th = threading.Thread(target=train_batch, args=(train_in, train_out, iters_per_batch, (iter_nr, file_nr, offset)))
 		th.start()
@@ -140,13 +129,14 @@ def main():
 			pass
 
 
-	print(f"\n**{'Finished':=^42}**\n\n")
-	plott(init_err, finl_err)
+	print(f"\n**{'Finished':=^42}**\n")
 	return
 
 
 if __name__ == '__main__':
 	main()
+	from test import validate_model
+	validate_model(model)
 
 # === Rejects ===
 

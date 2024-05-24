@@ -1,51 +1,38 @@
-import asyncio
 import sys
 sys.stdout.reconfigure(encoding='utf-8')
-x=0
-async def f1():
-	global x
-	while x == 0:
-		await asyncio.sleep(2)
-		print(x)
 
-async def f2():
-	global x
-	while True:
-		a = input()
-		x+=1
+# import os, torch, cloudpickle
+# base_path = r"G:/Licenta/impl/Models/MLP/Saved/"
+# fs = tuple(os.walk(base_path))
+# print(fs)
+# fs = sorted(fs[0][2])
+# for f in fs:
+# 	try:
+# 		m = torch.load(base_path + f)
+# 		print(f)
+# 		# print(m)
+# 		# torch.save(m, base_path + 'x' + f, pickle_module=cloudpickle)
+# 	except Exception as e:
+# 		# print(e)
+# 		...
 
-async def main():
-	asyncio.create_task(f1())
-	asyncio.create_task(f2())
-# import time
-# # asyncio.run(main())
-# print('a', flush=True)
-# time.sleep(5)
-# print('b')
+import polars as pl, time
+def time_f(f):
+	t0 = time.time()
+	f()
+	return time.time() - t0
 
-import polars as pl
-
-lines_per_file = 500_000
-
-# cc = pl.scan_parquet(r"Dataset/train/v1/train_1.parquet")
-# print("Open")
-# # print(cc.schema)
-# print(cc.select(pl.len()).collect())
-
-import os, torch, cloudpickle
-base_path = "Saved/"
-fs = tuple(os.walk(base_path))
-print(fs)
-fs = sorted(fs[0][2])
-for f in fs:
-	print(f)
-	try:
-		m = torch.load(base_path + f)
-		# print(m)
-		# torch.save(m, base_path + 'x' + f, pickle_module=cloudpickle)
-	except Exception as e:
-		print(e)
-
+f1 = lambda: print(pl.scan_parquet(r"Dataset/train/v1/train_1.parquet").slice(100_000,1).collect())
+f2 = lambda: print(pl.scan_parquet(r"Dataset/train/mega/train.parquet").limit(100_001).last(1).collect())
+f3 = lambda: print(pl.scan_parquet(r"Dataset/train/v1/train_1.parquet").shift(-100_000).limit(1).collect())
+import pyarrow
+with pyarrow.input_stream("Dataset/train/mega/train.parquet") as stream:
+	print(stream.read(10))
+# print("slice:", time_f(f1))
+# print("shift:", time_f(f2))
+# print("shift:", time_f(f3))
+# print(pl.scan_parquet(r"Dataset/train/mega/train.parquet").slice(100_000,1).explain())
+# print(pl.scan_parquet(r"Dataset/train/v1/train_1.parquet").schema)
 # cc.sink_parquet("Dataset/train/mega/train.parquet")
 # l = 10_091_520
 # quit(0)

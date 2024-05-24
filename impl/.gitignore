@@ -1,6 +1,6 @@
-Dataset
 CatBoostModel
-figures
 Models/MLP/Saved
 *.pt
+*.pickle
+*.parquet
 __pycache__

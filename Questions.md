@@ -15,5 +15,5 @@ Unclean data? (somewhere from kaggle, can't find it now)
 
 
 EM simultan si std/mean separat
-* pb 18 de la cap. Clusterizare
-* cu 2 etape separate (MLE - pb 50, 51 de la fundamente) urmat de EM curent (simplu, calc doar omega)
+* pb 18 de la cap. Clusterizare [[ex-book.17mai.pdf#page=879&selection=4,0,5,0|ex-book.17mai, page 879]]
+* cu 2 etape separate (MLE - pb 50, 51 de la fundamente) urmat de EM curent (simplu, calc doar omega) [[ex-book.17mai.pdf#page=115&selection=4,0,5,1|ex-book.17mai, page 115]]

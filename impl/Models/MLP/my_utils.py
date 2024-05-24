@@ -55,7 +55,8 @@ def expand_vars(vars: list[str]):
 	return sum([[v[0]] if v[1] == 1 else [f"{v[0]}_{i}" for i in range(v[1])] for v in vars], start=[])
 
 import polars as pl, json, matplotlib.pyplot as plt
-import numpy as np
+import numpy as np, torch, sys
+sys.stdout.reconfigure(encoding='utf-8')
 
 
 in_vars = expand_vars(in_vars)
@@ -92,37 +93,37 @@ def normalize_subset(df:pl.DataFrame | pl.LazyFrame, columns=None, method="+mean
 		columns = df.columns
 	if callable(method):
 		return method(df, columns)
-	match method:
-		case "+mean/std":
-			if denormalize:
+	if type(df) is pl.DataFrame or pl.LazyFrame:
+		match method:
+			case "+mean/std":
+				if denormalize:
+					return df.select(
+							(pl.col(col) * (data_insights[col]['std_dev'] if data_insights[col]['std_dev'] != 0 else 1)
+							+ data_insights[col]['mean']) if col in data_insights else pl.col(col)
+							for col in columns)
+				else:
+					return df.select(
+							((pl.col(col) -
+							data_insights[col]['mean']) / (data_insights[col]['std_dev'] if data_insights[col]['std_dev'] != 0 else 1))
+							if col in data_insights else pl.col(col)
+							for col in columns)
+			case "+mean":
+				if denormalize:
+					return df.select(
+							(pl.col(col) +
+							data_insights[col]['mean'])  if col in data_insights else pl.col(col)
+							for col in columns)
+				else:
+					return df.select(
+							(pl.col(col) -
+							data_insights[col]['mean'])  if col in data_insights else pl.col(col)
+							for col in columns)
+			case "none":
 				return df.select(
-						(pl.col(col) * (data_insights[col]['std_dev'] if data_insights[col]['std_dev'] != 0 else 1)
-						+ data_insights[col]['mean']) if col in data_insights else pl.col(col)
-						for col in columns)
-			else:
-				return df.select(
-						((pl.col(col) -
-						data_insights[col]['mean']) / (data_insights[col]['std_dev'] if data_insights[col]['std_dev'] != 0 else 1))
-						if col in data_insights else pl.col(col)
-						for col in columns)
-		case "+mean":
-			if denormalize:
-				return df.select(
-						(pl.col(col) +
-						data_insights[col]['mean'])  if col in data_insights else pl.col(col)
-						for col in columns)
-			else:
-				return df.select(
-						(pl.col(col) -
-						data_insights[col]['mean'])  if col in data_insights else pl.col(col)
-						for col in columns)
-		case "none":
-			return df.select(
-					(pl.col(col)
-					for col in columns))
-		case _:
-			raise Exception("'method' not recognized. Must be callable or one of ['+mean/std', '+mean', 'none']")
-
+						(pl.col(col)
+						for col in columns))
+			case _:
+				raise Exception("'method' not recognized. Must be callable or one of ['+mean/std', '+mean', 'none']")
 
 # import torch, polars as pl
 # from torch.utils.data import Dataset

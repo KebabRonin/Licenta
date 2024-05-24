@@ -7,8 +7,6 @@ from torchmetrics.regression import R2Score
 import cloudpickle
 sys.stdout.reconfigure(encoding='utf-8')
 
-import matplotlib.pyplot as plt
-
 # from torch.profiler import profile, record_function, ProfilerActivity
 
 torch.set_default_dtype(torch.float64)
@@ -31,7 +29,7 @@ model.to(DEVICE)
 # 	print("Didn't load optimizer, training from scratch... (Error is:", e)
 
 
-train_files = [f"Dataset/train/v1/train_{i}.parquet" for i in range(49)] # Fara 49, 50, ca e de validare
+# train_files = [f"Dataset/train/v1/train_{i}.parquet" for i in range(49)] # Fara 49, 50, ca e de validare
 
 # train_data = pl.scan_parquet("Dataset/train/v1/train_*.parquet").drop('sample_id')
 # total_data_len = train_data.select(pl.len()).collect().item()
@@ -40,19 +38,19 @@ data_insights = json.load(open('data_insights.json'))
 
 
 # === PARAMS ===
-nr_batches = 15
+nr_batches = 10
 batch_size = 20_000
 # iters_per_batch = 7
-epochs=25
+epochs=100
 # none, +mean or +mean/std
-normalization = "+mean/std"
+normalization = "+mean"
 
 # loss_function = R2Score(num_outputs=368).to(DEVICE)
 loss_function = torch.nn.MSELoss().to(DEVICE)
-optimizer = torch.optim.RAdam(model.parameters(), lr = 1e-3)
+optimizer = torch.optim.RAdam(model.parameters(), lr = 5e-4)
 # optimizer = torch.optim.Rprop(model.parameters(), maximize=True)
 
-print_box(	f'Loss: {type(loss_function).__name__}',
+print_box(	f'Loss: {type(loss_function).__name__ if "_lname" not in globals() else _lname}',
 			f'Optimizer: {type(optimizer).__name__}',
 			f'Normalization: {normalization}',
 			f'Device: {DEVICE}',
@@ -68,41 +66,20 @@ init_err, finl_err = [], []
 tloss = 0
 
 def train_batch(xs:torch.Tensor, ys:torch.Tensor, iters=1, name="train"):
-	# global init_err, finl_err
-		# global pbar
-
-	# pbar = trange(iters, ncols=_pbar_display_ncols, position=1, leave=True, miniters=1, ascii=" 123456789@", desc=f"<{time.strftime('%H:%M')}> [{name[0]:02}] ({name[1]:2}) {name[2]:>6}")
-	# is_first = True
-	# for _ in pbar:
-	# 	optimizer.zero_grad(set_to_none=True)
-		global tloss
-		pred = model(xs)
-		loss = loss_function(pred, ys)
-		loss.backward()
-		tloss += loss.item()
-	# 	optimizer.step()
-	# 	if is_first:
-	# 		is_first = False
-	# 		init_err.append(loss.item())
-	# del xs, ys
-	# finl_err.append(loss.item())
-	# pbar.set_postfix_str(f"{finl_err[-1]:.10f}")
-	# torch.save(model, f"model_checkpoint_{time.strftime('%d-%b-%Y-%H-%M-%S')}.pt", pickle_module=cloudpickle)
+	global tloss
+	pred = model(xs)
+	loss = loss_function(pred, ys)
+	loss.backward()
+	tloss += loss.item()
 
 def read_data(data: pl.LazyFrame, offset: int, batch_size):
-	# t0 = time.time()
 	batch = data.slice(offset=offset, length=batch_size).collect()
 
 	train_in = normalize_subset(batch,  in_vars, method=normalization).to_numpy()
 	train_out = normalize_subset(batch,  out_vars, method=normalization).to_numpy()
 
-	# train_in  = torch.tensor(train_in, device=DEVICE)
-	# train_out = torch.tensor(train_out, device=DEVICE)
-
-	# t1 = time.time()
-	# print(f"Read start ({offset}): {time.strftime('%H:%M:%S', time.localtime(t0))}")
-	# print(f"Read end   ({offset}): {time.strftime('%H:%M:%S', time.localtime(t1))}")
-	# print(f"Read     : {int(t1-t0)//60:02}:{(t1-t0)%60:05.2f}s")
+	train_in  = torch.tensor(train_in, device=DEVICE)
+	train_out = torch.tensor(train_out, device=DEVICE)
 	return train_in, train_out
 
 def main():
@@ -112,7 +89,6 @@ def main():
 	for e in trange(epochs, ncols=_pbar_display_ncols, position=1, leave=True, desc="Epochs", miniters=1):
 		optimizer.zero_grad()
 		tloss = 0
-		np.random.seed(10)
 		for iter_nr in trange(nr_batches, ncols=_pbar_display_ncols, position=0, leave=True, desc="Batches", miniters=1, ascii=" 123456789@"):
 			file_nr = np.random.randint(0, 40)
 			data = pl.scan_parquet(f"Dataset/train/v1/train_{file_nr}.parquet").drop("sample_id")
@@ -122,13 +98,9 @@ def main():
 			train_in, train_out = read_data(data, offset, batch_size)
 
 			if th:
-				# plott(init_err, finl_err)
 				gc.collect()
 				# print("Waiting for GPU model train to finish")
 				th.join()
-
-			train_in  = torch.tensor(train_in, device=DEVICE)
-			train_out = torch.tensor(train_out, device=DEVICE)
 
 			th = threading.Thread(target=train_batch, args=(train_in, train_out))
 			th.start()
@@ -136,7 +108,7 @@ def main():
 			# gc.collect()
 			th.join()
 		optimizer.step()
-		print(tloss)
+		print(tloss/(nr_batches*batch_size))
 		torch.save(model, f"model_checkpoint_{time.strftime('%d-%b-%Y-%H-%M-%S')}.pt", pickle_module=cloudpickle)
 
 	torch.save(model, "model.pt", pickle_module=cloudpickle)
@@ -149,16 +121,23 @@ def main():
 		except FileNotFoundError:
 			pass
 
-	print(f"\n**{'Finished':=^42}**\n\n")
+	print(f"\n**{'Finished':=^42}**\n")
 	# plott(init_err, finl_err)
 	return
 
 
 if __name__ == '__main__':
 	main()
+	from test import validate_model
+	validate_model(model)
 
 # === Rejects ===
 
+
+	# t1 = time.time()
+	# print(f"Read start ({offset}): {time.strftime('%H:%M:%S', time.localtime(t0))}")
+	# print(f"Read end   ({offset}): {time.strftime('%H:%M:%S', time.localtime(t1))}")
+	# print(f"Read     : {int(t1-t0)//60:02}:{(t1-t0)%60:05.2f}s")
 
 # @torch.jit.script
 # model = torch.compile(model)

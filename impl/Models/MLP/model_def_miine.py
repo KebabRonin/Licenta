@@ -6,7 +6,7 @@ import torch.nn.functional as F
 in_len = 556
 out_len = 368
 
-class ResBlock(nn.Module):
+class SkipConnection(nn.Module):
 	def __init__(self, layers):
 		super().__init__()
 		self.actual = layers
@@ -16,9 +16,10 @@ class ResBlock(nn.Module):
 		return torch.concat([self.actual(x), x], dim=1)
 
 l_widths = [768, 640, 512, 640, 640, 360]
-d1 = 2048
-d2 = 1024
-d3 = 512
+d1 = 4096
+d2 = 2048
+d3 = 1024
+# d3 = 512
 
 class MLP(nn.Module):
 	def __init__(self):
@@ -27,18 +28,24 @@ class MLP(nn.Module):
 		# v3:
 		self.modelss = nn.ModuleList([
 			*(nn.Sequential(
-				ResBlock(nn.Sequential(
-					nn.Linear(in_len, d2),
+				SkipConnection(nn.Sequential(
+					nn.Linear(in_len, d1),
 					nn.LeakyReLU(),
-					nn.Linear(d2, d3),
-					nn.LeakyReLU(),
-					nn.Linear(d3, 256),
+					nn.Linear(d1, d2),
 					nn.LeakyReLU(),
 				)),
-				nn.Linear(256+in_len, 20),
-			) for _ in range(360//20)),
+				SkipConnection(nn.Sequential(
+					nn.Linear(in_len+d2, d2),
+					nn.LeakyReLU(),
+					nn.Linear(d2, d2),
+					nn.LeakyReLU(),
+					nn.Linear(d2, 256),
+					nn.LeakyReLU(),
+				)),
+				nn.Linear(in_len+d2+256, 60),
+			) for _ in range(360//60)),
 			nn.Sequential(
-				ResBlock(nn.Sequential(
+				SkipConnection(nn.Sequential(
 					nn.Linear(in_len, d2),
 					nn.LeakyReLU(),
 					nn.Linear(d2, d3),

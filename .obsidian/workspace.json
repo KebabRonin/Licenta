@@ -13,7 +13,7 @@
             "state": {
               "type": "pdf",
               "state": {
-                "file": "PDF/other_resnet.pdf"
+                "file": "PDF/ClimSim.pdf"
               }
             }
           }
@@ -67,7 +67,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200
+    "width": 407.5026054382324
   },
   "right": {
     "id": "ea3d830a6382a778",
@@ -83,7 +83,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "PDF/other_resnet.pdf",
+                "file": "PDF/ClimSim.pdf",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -100,7 +100,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "PDF/other_resnet.pdf",
+                "file": "PDF/ClimSim.pdf",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -123,7 +123,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "PDF/other_resnet.pdf"
+                "file": "PDF/ClimSim.pdf"
               }
             }
           }
@@ -150,22 +150,23 @@
   },
   "active": "6abb345abb57a2d9",
   "lastOpenFiles": [
-    "Presentation.md",
-    "References.md",
-    "PDF/other_resnet.pdf",
-    "impl/model_checkpoint_17-May-2024-14-55-24.pt",
+    "impl/Models/MLP/submit_gmr.py",
+    "impl/Models/MLP/tempCodeRunnerFile.py",
+    "PDF/Kaggle-ensembling-guide.pdf",
+    "impl/model_checkpoint_24-May-2024-12-58-28.pt",
+    "impl/model_checkpoint_24-May-2024-12-36-30.pt",
+    "impl/model_checkpoint_24-May-2024-12-16-20.pt",
+    "impl/model_checkpoint_24-May-2024-11-56-16.pt",
+    "impl/model_checkpoint_24-May-2024-11-35-39.pt",
+    "impl/model_checkpoint_24-May-2024-11-15-10.pt",
+    "impl/model_checkpoint_24-May-2024-10-54-50.pt",
+    "impl/model_checkpoint_24-May-2024-10-34-46.pt",
     "Questions.md",
-    "Tools.md",
-    "impl/model_checkpoint_17-May-2024-14-48-35.pt",
-    "PDF/problem_history_and_preds2003.pdf",
-    "PDF/problem_history_2004.pdf",
-    "PDF/2022Correcting Coarse‐Grid Weather and Climate Models by Machine Learning From.pdf",
-    "PDF/2023-ResNet-ensamble.pdf",
-    "impl/model.pt",
-    "impl/model_checkpoint_17-May-2024-14-36-56.pt",
-    "PDF/ClimaX_Microsoft.pdf",
-    "PDF/KAN.md",
     "Ideas.md",
+    "References.md",
+    "Tools.md",
+    "Presentation.md",
+    "PDF/KAN.md",
     "Glossary.md",
     "Paper insights(not done yet)/DeepPhysNet.md",
     "Paper insights(not done yet)/ClimSim.md",
