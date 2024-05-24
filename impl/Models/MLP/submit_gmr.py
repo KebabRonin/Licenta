@@ -23,3 +23,10 @@ submission.insert_column(0, sample_ids)
 print(submission)
 # submission = model.predict(np.array([i for i in range(test.shape[1])]), test.to_numpy())
 submission.write_parquet("GMM/submission.parquet")
+
+del submission
+
+a = pl.scan_parquet("GMM/submission.parquet")
+assert len(a.columns) == len(out_vars) + 1, "Columns missing"
+assert all([c in out_vars + ['sample_id'] for c in a.columns]), "Columns names are not OK"
+assert a.select(pl.len()).collect().item() == 625_000, "Less than 625_000 rows found"

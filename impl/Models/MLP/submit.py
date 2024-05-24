@@ -17,11 +17,11 @@ torch.set_default_dtype(torch.float64)
 DEVICE = torch.device('cuda')
 
 test = pl.read_parquet("Dataset/test/test.parquet")
+sample_ids = test.drop_in_place("sample_id")
+test.drop("sample_id")
 test = normalize_subset(test) #.insert_column(0, test.to_series(0))
 weights = pl.read_csv("Dataset/weights.csv").drop('sample_id').cast(pl.Float64)
 dlen = test.select(pl.len()).item()
-submission = weights.clear(dlen)
-submission.insert_column(0, test['sample_id'])
 out_schema=weights.schema
 # weights = torch.tensor(weights.to_numpy())[0].to('cpu')
 weights = weights.to_numpy()[0]
@@ -53,17 +53,13 @@ def predict(name):
 	weighted = tuple(([sample[0]] + prediction.tolist()))
 	return weighted
 def get_pred(sample: pl.DataFrame):
-	sample_ids = sample.to_series(0)
-	sample = sample.drop("sample_id")
 	prediction = model(torch.tensor(sample.to_numpy(), device=DEVICE))
 	pred = pl.DataFrame(prediction.to('cpu').numpy(), schema=out_schema)
 	# undo standardisation
 	df = normalize_subset(pred, denormalize=True)
 	# weight prediction (required by competition)
 	weighted = pl.DataFrame((df.to_numpy()[None, :] * weights).squeeze(), schema=out_schema)
-
-	df = weighted.insert_column(0, sample_ids) # weighted.with_columns(sample_id=sample_ids)
-	return df
+	return weighted
 
 batch_size = 125_000
 
@@ -78,11 +74,18 @@ with torch.no_grad():
 	le = submission.select(pl.len()).item()
 	# print(submission['ptend_q0002_12'])
 
-	for i in range(len(submission.columns)-1): # without sample_id
+	for i in range(len(submission.columns)): # without sample_id
 		if r2[i] < 0:
-			name = submission.columns[i+1]
+			print(out_vars[i])
+			name = submission.columns[i]
 			s = pl.Series(values=[data_insights[name]["mean"] for _ in range(le)], name=name)
-			submission.replace_column(i+1, s)
+			submission.replace_column(i, s)
 
+	submission.insert_column(0, sample_ids)
 	# print(submission['ptend_q0002_12'])
 	submission.write_parquet('submission.parquet')
+
+a = pl.scan_parquet("submission.parquet")
+assert len(a.columns) == len(out_vars) + 1, "Columns missing"
+assert all([c in out_vars + ['sample_id'] for c in a.columns]), "Columns names are not OK"
+assert a.select(pl.len()).collect().item() == 625_000, "Less than 625_000 rows found"

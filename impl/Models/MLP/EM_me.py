@@ -1,4 +1,4 @@
-import numpy as np, polars as pl
+import numpy as np, polars as pl, math
 from my_utils import *
 import cloudpickle, time
 
@@ -14,19 +14,22 @@ class EMRegressor:
 		self.z = None
 
 	def Estep(self):
-		mulw = (self.predictions[None, :, :] * self.weights).squeeze(axis=0)
-		other = mulw[:, :, None].squeeze(axis=2) # prepare for elementwise division
-		fp = self.final_pred[:, :, np.newaxis]   # prepare for elementwise division
-		print(f"{mulw.shape=}, {other.shape=}, {fp.shape=}")
-		self.z = other / fp # dout[:, :, np.newaxis]
-		print(f"EStep {self.z.shape=}")
-		print(f"{self.z=}")
+		# mulw = (self.predictions[None, :, :] * self.weights).squeeze(axis=0)
+		# other = mulw[:, :, None].squeeze(axis=2) # prepare for elementwise division
+		# fp = self.final_pred[:, :, np.newaxis]   # prepare for elementwise division
+		# print(f"{mulw.shape=}, {other.shape=}, {fp.shape=}")
+		# self.z = other / fp # dout[:, :, np.newaxis]
+		# print(f"EStep {self.z.shape=}")
+		# print(f"{self.z=}")
+		x, mean, std = None, None, None
+		self.p = normal(x, mean, std) *
 
 	def Mstep(self):
-		print(f"{self.weights[0]=}")
 		self.weights = np.mean(self.z, axis=0)
-		print(f"MStep {self.weights.shape=}")
-		print(f"{self.weights[0]=}")
+		# print(f"{self.weights[0]=}")
+		# self.weights = np.mean(self.z, axis=0)
+		# print(f"MStep {self.weights.shape=}")
+		# print(f"{self.weights[0]=}")
 
 	def train(self, data_in: np.ndarray, data_out: np.ndarray, n_iters=10):
 		if data_in.shape[1] != self.in_len:
@@ -37,3 +40,7 @@ class EMRegressor:
 			self.Estep(data_out)
 			self.Mstep()
 			print(f"Iter {i+1:>3} weights:\n{self.weights[:20, :].T}")
+
+
+def normal(x, mean, std):
+	return (1/(2*math.sqrt(2*math.pi*std))) * math.exp(-((x - mean)**2)/(2*(std**2)))
