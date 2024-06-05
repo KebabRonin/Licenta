@@ -7,14 +7,7 @@ from my_utils import *
 import sys, time, json
 sys.stdout.reconfigure(encoding='utf-8')
 
-def validate_model(model):
-	nr_rows = 100_000
-	valid = pl.read_parquet([f"Dataset/train/v1/train_{i}.parquet" for i in range(40, 51)], n_rows=nr_rows)
-	# valid = pl.read_parquet("Dataset/train/v1/train_41.parquet", n_rows=nr_rows)
-
-	ins = normalize_subset(valid,in_vars, method="+mean/std")
-	outs = normalize_subset(valid,out_vars, method="+mean/std")
-	# print("Read in")
+def validate_model(model, ins, outs):
 	model.eval()
 
 	r2score = R2Score(num_outputs=368, multioutput="raw_values").to('cuda')
@@ -27,6 +20,8 @@ def validate_model(model):
 		outs= torch.tensor(outs.to_numpy(), device='cuda')
 		# for sample, a in (zip(ins.iter_rows(), outs.iter_rows())):
 		prediction = model(ins)
+		# for i in range(27):
+		# 	prediction[:, 120+i] = -ins[:, 120+i] / 1200
 		# print(prediction[0][:20])
 		# print(outs[0][:20])
 		r2 = r2score(prediction, outs)
@@ -66,13 +61,26 @@ def validate_model(model):
 		print("Actual  r2:", notnice/len(out_vars))
 		print("True", tru)
 		plt.plot(r2.cpu())
+		plt.axis((None, None, -1.5, 1.5))
 		plt.show()
+		# plt.plot(in_std_dev, label='in')
+		# plt.plot(out_std_dev, label='out')
+		# plt.axis((None, None, -1.5, 1.5))
+		# plt.legend()
+		# plt.show()
 	model.train()
 
 if __name__ == '__main__':
 	model = torch.load('model.pt')
 	print(model)
-	validate_model(model)
+	nr_rows = 100_000
+	valid = pl.read_parquet([f"Dataset/train/v1/train_{i}.parquet" for i in range(40, 51)], n_rows=nr_rows)
+	# valid = pl.read_parquet("Dataset/train/v1/train_41.parquet", n_rows=nr_rows)
+
+	ins = normalize_subset(valid,in_vars, method="+mean/std")
+	outs = normalize_subset(valid,out_vars, method="+mean/std")
+	# print("Read in")
+	validate_model(model, ins, outs)
 """MAE      : 0.2969637971058436
 *Nice* r2: 0.19872192730669117
 Actual r2: -87.40791329077405"""

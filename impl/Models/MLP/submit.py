@@ -22,6 +22,7 @@ test.drop("sample_id")
 test = normalize_subset(test) #.insert_column(0, test.to_series(0))
 weights = pl.read_csv("Dataset/weights.csv").drop('sample_id').cast(pl.Float64)
 dlen = test.select(pl.len()).item()
+print(dlen)
 out_schema=weights.schema
 # weights = torch.tensor(weights.to_numpy())[0].to('cpu')
 weights = weights.to_numpy()[0]
@@ -53,10 +54,13 @@ def predict(name):
 	weighted = tuple(([sample[0]] + prediction.tolist()))
 	return weighted
 def get_pred(sample: pl.DataFrame):
-	prediction = model(torch.tensor(sample.to_numpy(), device=DEVICE))
+	sample = torch.tensor(sample.to_numpy(), device=DEVICE)
+	prediction = model(sample)
 	pred = pl.DataFrame(prediction.to('cpu').numpy(), schema=out_schema)
 	# undo standardisation
 	df = normalize_subset(pred, denormalize=True)
+	# for i in range(27):
+	# 	prediction[:, 120+i] = -sample[:, 120+i] / 1200
 	# weight prediction (required by competition)
 	weighted = pl.DataFrame((df.to_numpy()[None, :] * weights).squeeze(), schema=out_schema)
 	return weighted

@@ -68,8 +68,8 @@ all_vars = ["sample_id"] + in_vars + out_vars
 data_insights = json.load(open("data_insights.json"))
 in_means = np.array([data_insights[v]["mean"] for v in in_vars])
 out_means = np.array([data_insights[v]["mean"] for v in out_vars])
-in_std_dev = np.array([data_insights[v]["std_dev"] for v in in_vars])
-out_std_dev = np.array([data_insights[v]["std_dev"] for v in out_vars])
+in_std_dev  = np.array([data_insights[v]["std_dev"] if data_insights[v]["std_dev"] != 0 else 1 for v in in_vars])
+out_std_dev = np.array([data_insights[v]["std_dev"] if data_insights[v]["std_dev"] != 0 else 1 for v in out_vars])
 
 def print_box(*args): #, width=40):
 	print(f"**{'&':=^42}**")
@@ -85,9 +85,38 @@ def plott(init_err, finl_err, figname="fig"):
 	_plt_indices = [i for i in range(len(finl_err))]
 	plt.bar(_plt_indices, init_err[:len(finl_err)], alpha=0.5, label='init', color='orange')# color=list(map(lambda x: 'blue' if x > 0 else 'red', init_err[:len(finl_err)])))
 	plt.bar(_plt_indices, finl_err, label='final', alpha=0.5, color='cyan')# color=list(map(lambda x: 'cyan' if x > 0 else 'orange', finl_err)))
+	plt.axis((None, None, -1, 1))
 	plt.legend()
 	plt.savefig(figname)
+def preprocess_standardisation(arr:np.ndarray):
+	features = ((arr[:, :556] - in_means )[None, :] / in_std_dev ).squeeze()
+	targets  = ((arr[:, 556:] - out_means)[None, :] / out_std_dev).squeeze()
+	return features, targets
+def preprocess_destandardisation(arr:np.ndarray):
+	targets  = ((arr[None, :] * out_std_dev)[None, :] + out_means).squeeze()
+	return targets
+def preprocess_centered(arr:np.ndarray):
+	features = ((arr[:, :556] - in_means )).squeeze()
+	targets  = ((arr[:, 556:] - out_means)).squeeze()
+	return features, targets
+def preprocess_decentered(arr:np.ndarray):
+	targets  = (arr[None, :] + out_means).squeeze()
+	return targets
+def preprocess_none(arr:np.ndarray):
+	features = (arr[:, :556]).squeeze()
+	targets  = (arr[:, 556:]).squeeze()
+	return features, targets
+def preprocess_denone(arr:np.ndarray):
+	targets  = (arr[:, :]).squeeze()
+	return targets
 
+preprocess_functions = {
+	"+mean/std": {"norm": preprocess_standardisation, "denorm": preprocess_destandardisation},
+	"+mean": {"norm": preprocess_centered, "denorm": preprocess_decentered},
+	"none": {"norm": preprocess_none, "denorm": preprocess_denone},
+}
+
+# legacy
 def normalize_subset(df:pl.DataFrame | pl.LazyFrame, columns=None, method="+mean/std", denormalize=False) -> pl.DataFrame | pl.LazyFrame:
 	if columns is None:
 		columns = df.columns
@@ -125,20 +154,80 @@ def normalize_subset(df:pl.DataFrame | pl.LazyFrame, columns=None, method="+mean
 			case _:
 				raise Exception("'method' not recognized. Must be callable or one of ['+mean/std', '+mean', 'none']")
 
-# import torch, polars as pl
-# from torch.utils.data import Dataset
-# from my_utils import in_vars, out_vars
+from torch.utils.data import Dataset, DataLoader
+import torch.utils.data as tdata
+import psycopg2.pool as psycopg2_pool
+conns = psycopg2_pool.ThreadedConnectionPool(1, 10, dbname="Data", user="postgres", password="admin", host="localhost")
+class CustomSQLDataset(Dataset):
+	def __init__(self, norm_method = "+mean/std"):
+		self.norm_method = norm_method
+		self.norm = preprocess_functions[norm_method]['norm']
+		self.denorm = preprocess_functions[norm_method]['denorm']
 
-# class MyDataset(Dataset):
-# 	def __init__(self, in_files, normalize=False):
-# 		self.lazy_df = pl.scan_parquet(in_files)
-# 		self.normalize = normalize
+	def __len__(self):
+		return 10_091_520
 
-# 	def __len__(self):
-# 		return self.lazy_df.select(pl.len()).collect().item()
+	def __getitem__(self, idx):
+		global conns
+		conn = conns.getconn()
+		df = pl.read_database(f"select * from public.train where sample_id_int = ({idx})", connection=conn).drop('sample_id_int')
+		features, target = self.norm(df.to_numpy())
+		conns.putconn(conn)
+		return features.squeeze(), target.squeeze()
+	def __getitems__(self, ids):
+		global conns
+		conn = conns.getconn()
+		df = pl.read_database(f"select * from public.train where sample_id_int in ({', '.join(map(str, ids))})", connection=conn).drop('sample_id_int')
+		features, target = self.norm(df.to_numpy())
+		conns.putconn(conn)
+		return features.squeeze(), target.squeeze()
 
-# 	def __getitem__(self, idx):
-# 		row = self.lazy_df.slice(idx, 1).collect()
-# 		x = torch.tensor(row.select(pl.col(in_vars)).to_numpy()).float()
-# 		y = torch.tensor(row.select(pl.col(out_vars)).to_numpy()).float()
-# 		return (x - in_means) / in_std_dev, (y - out_means) / out_std_dev
+
+import time
+torch.set_default_dtype(torch.float64)
+DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+# torch.set_default_device(DEVICE)
+
+# sampl = iter(tdata.RandomSampler(CustomSQLDataset()))
+# ids = [next(sampl) for _ in range(BATCH_SIZE)]
+
+# for e in range(10):
+# 	print([next(sampl) for _ in range(BATCH_SIZE)])
+# 	if e > 10:
+# 		break
+# exit(0)
+import tqdm
+def identity(x: tuple[np.ndarray, np.ndarray]):
+	return torch.tensor(x[0], dtype=torch.float64, device=DEVICE), torch.tensor(x[1], dtype=torch.float64, device=DEVICE)
+
+
+class SkipConnection(torch.nn.Module):
+	def __init__(self, layers):
+		super().__init__()
+		self.actual = layers
+
+	def forward(self, x):
+		return torch.concat([self.actual(x), x], dim=1)
+
+
+if __name__ == '__main__':
+	BATCH_SIZE = 200
+	sqldloader = DataLoader(CustomSQLDataset(), # batch_size=BATCH_SIZE, shuffle=True,
+						 num_workers=4, prefetch_factor=5,# pin_memory=True, pin_memory_device='cuda',
+						 batch_sampler=tdata.BatchSampler(tdata.RandomSampler(CustomSQLDataset()), batch_size=BATCH_SIZE, drop_last=False),
+						 collate_fn=identity,)
+						#  generator=torch.Generator(device='cuda'))
+	# cc = conns.getconn()
+	for xs, ys in enumerate(tqdm.tqdm(sqldloader)):
+		pass
+	# ids = [random.randrange(0, 10_091_520) for i in range(BATCH_SIZE)]
+	t0 = time.time()
+	# sampl = iter(tdata.RandomSampler(CustomSQLDataset()))
+	# ids = [str(next(sampl)) for _ in range(BATCH_SIZE)]
+	# df = pl.read_database(f"select * from public.train where sample_id_int in ({', '.join(ids)})", connection=cc).drop('sample_id_int')
+	# df = df.to_numpy().squeeze()
+	# xs, ys = preprocess_functions["+mean/std"]['norm'](df)
+	xs, ys = next(iter(sqldloader))
+	print(time.time() - t0)
+	print(xs.shape, ys.shape, xs.dtype, ys.dtype)
+	print(xs)

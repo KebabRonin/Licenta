@@ -15,11 +15,10 @@ class SkipConnection(nn.Module):
 		# print(x.shape)
 		return torch.concat([self.actual(x), x], dim=1)
 
-l_widths = [768, 640, 512, 640, 640, 360]
-d1 = 4096
-d2 = 2048
-d3 = 1024
-# d3 = 512
+# d1 = 4096
+d1 = 2048
+d2 = 1024
+d3 = 512
 
 class MLP(nn.Module):
 	def __init__(self):
@@ -30,16 +29,18 @@ class MLP(nn.Module):
 			*(nn.Sequential(
 				SkipConnection(nn.Sequential(
 					nn.Linear(in_len, d1),
+					nn.LayerNorm(d1),
 					nn.LeakyReLU(),
 					nn.Linear(d1, d2),
+					nn.LayerNorm(d2),
 					nn.LeakyReLU(),
 				)),
 				SkipConnection(nn.Sequential(
 					nn.Linear(in_len+d2, d2),
-					nn.LeakyReLU(),
-					nn.Linear(d2, d2),
+					nn.LayerNorm(d2),
 					nn.LeakyReLU(),
 					nn.Linear(d2, 256),
+					nn.LayerNorm(256),
 					nn.LeakyReLU(),
 				)),
 				nn.Linear(in_len+d2+256, 60),
@@ -47,10 +48,13 @@ class MLP(nn.Module):
 			nn.Sequential(
 				SkipConnection(nn.Sequential(
 					nn.Linear(in_len, d2),
+					nn.LayerNorm(d2),
 					nn.LeakyReLU(),
 					nn.Linear(d2, d3),
+					nn.LayerNorm(d3),
 					nn.LeakyReLU(),
 					nn.Linear(d3, 256),
+					nn.LayerNorm(256),
 					nn.LeakyReLU(),
 				)),
 				nn.Linear(256+in_len, 8),
@@ -69,6 +73,7 @@ if __name__ == '__main__':
 	pytorch_total_params = sum(p.numel() for p in model.parameters())
 	print(pytorch_total_params)
 
+# l_widths = [768, 640, 512, 640, 640, 360]
 		# v2:
 		# self.linear_relu_stack = nn.Sequential(
 		# 	# nn.LayerNorm((in_len,)),

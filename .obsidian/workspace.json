@@ -11,9 +11,12 @@
             "id": "6abb345abb57a2d9",
             "type": "leaf",
             "state": {
-              "type": "pdf",
+              "type": "markdown",
               "state": {
-                "file": "PDF/ClimSim.pdf"
+                "file": "References.md",
+                "mode": "source",
+                "backlinks": true,
+                "source": false
               }
             }
           }
@@ -83,7 +86,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "PDF/ClimSim.pdf",
+                "file": "References.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -100,7 +103,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "PDF/ClimSim.pdf",
+                "file": "References.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -123,7 +126,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "PDF/ClimSim.pdf"
+                "file": "References.md"
               }
             }
           }
@@ -150,24 +153,25 @@
   },
   "active": "6abb345abb57a2d9",
   "lastOpenFiles": [
-    "impl/Models/MLP/submit_gmr.py",
-    "impl/Models/MLP/tempCodeRunnerFile.py",
-    "PDF/Kaggle-ensembling-guide.pdf",
-    "impl/model_checkpoint_24-May-2024-12-58-28.pt",
-    "impl/model_checkpoint_24-May-2024-12-36-30.pt",
-    "impl/model_checkpoint_24-May-2024-12-16-20.pt",
-    "impl/model_checkpoint_24-May-2024-11-56-16.pt",
-    "impl/model_checkpoint_24-May-2024-11-35-39.pt",
-    "impl/model_checkpoint_24-May-2024-11-15-10.pt",
-    "impl/model_checkpoint_24-May-2024-10-54-50.pt",
-    "impl/model_checkpoint_24-May-2024-10-34-46.pt",
+    "PDF/ClimSim.pdf",
+    "PDF/Misc/ex-book.17mai.pdf",
+    "PDF/Misc/book-book.editia-3.11nov2020.pdf",
+    "PDF/other_resnet.pdf",
+    "impl/GMM/submission.parquet",
+    "impl/GMM",
+    "impl/submission.parquet",
+    "Presentation.md",
+    "References.md",
+    "Glossary.md",
+    "tldraw/Tldraw 2024-05-05 6.49PM.md",
+    "Tools.md",
     "Questions.md",
     "Ideas.md",
-    "References.md",
-    "Tools.md",
-    "Presentation.md",
+    "PDF/problem_history_and_preds2003.pdf",
+    "PDF/problem_history_2004.pdf",
+    "PDF/2013 - Randall - Beyond deadlock.pdf",
+    "impl/Models/MLP/em.out",
     "PDF/KAN.md",
-    "Glossary.md",
     "Paper insights(not done yet)/DeepPhysNet.md",
     "Paper insights(not done yet)/ClimSim.md",
     "Paper insights(not done yet)/ClimaX_Microsoft.md",
@@ -183,7 +187,6 @@
     "impl/README.md",
     "Pasted image 20240507173228.png",
     "Pasted image 20240507173225.png",
-    "tldraw/Tldraw 2024-05-05 6.49PM.md",
     "impl/figs/state_q0001_43.png",
     "impl/figs/state_q0001_42.png",
     "impl/figs/state_q0001_41.png",

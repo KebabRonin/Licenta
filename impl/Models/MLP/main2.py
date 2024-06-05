@@ -40,8 +40,8 @@ data_insights = json.load(open('data_insights.json'))
 
 
 # === PARAMS ===
-nr_batches = 500
-batch_size = 5_000
+nr_batches = 45000
+batch_size = 200
 iters_per_batch = 1
 # none, +mean or +mean/std
 normalization = "+mean/std"

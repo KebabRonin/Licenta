@@ -20,6 +20,12 @@ class CNN(nn.Module):
 		super().__init__()
 		self.l_60_models = nn.ModuleList([nn.Sequential(
 			nn.Conv1d(in_channels=60, out_channels=20, kernel_size=(2, )),
+			nn.LeakyReLU(0.15),
+			nn.Conv1d(in_channels=60, out_channels=20, kernel_size=(2, )),
+			nn.LeakyReLU(0.15),
+			nn.Conv1d(in_channels=60, out_channels=20, kernel_size=(2, )),
+			nn.LeakyReLU(0.15),
+			nn.Conv1d(in_channels=60, out_channels=20, kernel_size=(2, )),
 			nn.Linear(in_len, 512),
 			nn.LeakyReLU(0.15),
 			nn.Linear(512, 512),
