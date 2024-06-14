@@ -56,16 +56,16 @@ def predict(name):
 def get_pred(sample: pl.DataFrame):
 	sample = torch.tensor(sample.to_numpy(), device=DEVICE)
 	prediction = model(sample)
-	pred = pl.DataFrame(prediction.to('cpu').numpy(), schema=out_schema)
+	df = pl.DataFrame(preprocess_destandardisation(prediction.to('cpu').numpy()), schema=out_schema) # pred
 	# undo standardisation
-	df = normalize_subset(pred, denormalize=True)
+	# df = normalize_subset(pred, denormalize=True)
 	# for i in range(27):
 	# 	prediction[:, 120+i] = -sample[:, 120+i] / 1200
 	# weight prediction (required by competition)
 	weighted = pl.DataFrame((df.to_numpy()[None, :] * weights).squeeze(), schema=out_schema)
 	return weighted
 
-batch_size = 125_000
+batch_size = 75_000
 
 with torch.no_grad():
 	model = torch.load('model.pt')
@@ -82,7 +82,7 @@ with torch.no_grad():
 		if r2[i] < 0:
 			print(out_vars[i])
 			name = submission.columns[i]
-			s = pl.Series(values=[data_insights[name]["mean"] for _ in range(le)], name=name)
+			s = pl.Series(values=[(data_insights[name]["mean"] * weights[i]) for _ in range(le)], name=name)
 			submission.replace_column(i, s)
 
 	submission.insert_column(0, sample_ids)

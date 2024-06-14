@@ -21,7 +21,7 @@ def load_model():
 		print("Loaded model weights")
 	except Exception as e:
 		print("Didn't load model, training from scratch... (Error is:", e)
-		from model_def_miine import model
+		from model_def import model
 
 	return model
 
@@ -32,8 +32,8 @@ from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 # === PARAMS ===
 NUM_EPOCHS = 1
-batch_size = 256
-iters_per_batch = 1
+batch_size = 3796
+iters_per_batch = 2
 # none, +mean or +mean/std
 normalization = "+mean/std"
 CHECKPOINT_INTERVAL = 15

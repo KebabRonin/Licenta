@@ -68,6 +68,12 @@ all_vars = ["sample_id"] + in_vars + out_vars
 data_insights = json.load(open("data_insights.json"))
 in_means = np.array([data_insights[v]["mean"] for v in in_vars])
 out_means = np.array([data_insights[v]["mean"] for v in out_vars])
+in_mins = np.array([data_insights[v]["min"] for v in in_vars])
+out_mins = np.array([data_insights[v]["min"] for v in out_vars])
+in_maxs = np.array([data_insights[v]["max"] for v in in_vars])
+out_maxs = np.array([data_insights[v]["max"] for v in out_vars])
+in_mms = np.array([in_maxs[i] - in_mins[i] if in_maxs[i] - in_mins[i] != 0 else 1 for i in range(len(in_vars))])
+out_mms = np.array([out_maxs[i] - out_mins[i] if out_maxs[i] - out_mins[i] != 0 else 1 for i in range(len(out_vars))])
 in_std_dev  = np.array([data_insights[v]["std_dev"] if data_insights[v]["std_dev"] != 0 else 1 for v in in_vars])
 out_std_dev = np.array([data_insights[v]["std_dev"] if data_insights[v]["std_dev"] != 0 else 1 for v in out_vars])
 
@@ -95,6 +101,22 @@ def preprocess_standardisation(arr:np.ndarray):
 def preprocess_destandardisation(arr:np.ndarray):
 	targets  = ((arr[None, :] * out_std_dev)[None, :] + out_means).squeeze()
 	return targets
+def preprocess_mean_normalisation(arr:np.ndarray):
+	features = ((arr[:, :556] - in_means )[None, :] / in_mms ).squeeze()
+	targets  = ((arr[:, 556:] - out_means)[None, :] / out_mms).squeeze()
+	return features, targets
+def preprocess_mean_denormalisation(arr:np.ndarray):
+	targets  = ((arr[None, :] * out_mms)[None, :] + out_means).squeeze()
+	return targets
+def preprocess_standardisation_minmax(arr:np.ndarray, a, b):
+	# a, b = -10, 10
+	features = a + (((arr[:, :556] - in_mins )[None, :] * (b-a)) / in_mms ).squeeze()
+	targets  = a + (((arr[:, 556:] - out_mins)[None, :] * (b-a)) / out_mms).squeeze()
+	return features, targets
+def preprocess_destandardisation_minmax(arr:np.ndarray, a, b):
+	# a, b = -10, 10
+	targets  = (((arr[None, :] - a) * out_mms)[None, :] / (b-a) + out_mins).squeeze()
+	return targets
 def preprocess_centered(arr:np.ndarray):
 	features = ((arr[:, :556] - in_means )).squeeze()
 	targets  = ((arr[:, 556:] - out_means)).squeeze()
@@ -109,13 +131,28 @@ def preprocess_none(arr:np.ndarray):
 def preprocess_denone(arr:np.ndarray):
 	targets  = (arr[:, :]).squeeze()
 	return targets
-
+def mmax10(x):
+	return preprocess_standardisation_minmax(x, -10, 10)
+def demmax10(x):
+	return preprocess_destandardisation_minmax(x, -10, 10)
+def mmax100(x):
+	return preprocess_standardisation_minmax(x, -100, 100)
+def demmax100(x):
+	return preprocess_destandardisation_minmax(x, -100, 100)
 preprocess_functions = {
+	"mean norm": {"norm": preprocess_mean_normalisation, "denorm": preprocess_mean_denormalisation},
+	"minmax10": {"norm": mmax10, "denorm": demmax10},
+	"minmax100": {"norm": mmax100, "denorm": demmax100},
 	"+mean/std": {"norm": preprocess_standardisation, "denorm": preprocess_destandardisation},
 	"+mean": {"norm": preprocess_centered, "denorm": preprocess_decentered},
 	"none": {"norm": preprocess_none, "denorm": preprocess_denone},
 }
-
+VALID_RESERVE=2
+def get_splits():
+	fraction = 0.05
+	splits = [fraction for _ in range(int(1//fraction))]
+	splits += [1 - sum(splits)]
+	return splits
 # legacy
 def normalize_subset(df:pl.DataFrame | pl.LazyFrame, columns=None, method="+mean/std", denormalize=False) -> pl.DataFrame | pl.LazyFrame:
 	if columns is None:
@@ -170,17 +207,21 @@ class CustomSQLDataset(Dataset):
 	def __getitem__(self, idx):
 		global conns
 		conn = conns.getconn()
-		df = pl.read_database(f"select * from public.train where sample_id_int = ({idx})", connection=conn).drop('sample_id_int')
+		df = pl.read_database(f"select * from public.train where sample_id_int = ({idx})", connection=conn)
+		ids = df.drop_in_place('sample_id_int').to_numpy()
+		df = df.drop('sample_id_int')
 		features, target = self.norm(df.to_numpy())
 		conns.putconn(conn)
-		return features.squeeze(), target.squeeze()
+		return features.squeeze(), target.squeeze()#, ids.squeeze()
 	def __getitems__(self, ids):
 		global conns
 		conn = conns.getconn()
-		df = pl.read_database(f"select * from public.train where sample_id_int in ({', '.join(map(str, ids))})", connection=conn).drop('sample_id_int')
+		df = pl.read_database(f"select * from public.train where sample_id_int in ({', '.join(map(str, ids))})", connection=conn)
+		ids = df.drop_in_place('sample_id_int').to_numpy()
+		df = df.drop('sample_id_int')
 		features, target = self.norm(df.to_numpy())
 		conns.putconn(conn)
-		return features.squeeze(), target.squeeze()
+		return features.squeeze(), target.squeeze()#, ids.squeeze()
 
 
 import time
@@ -197,9 +238,9 @@ DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 # 		break
 # exit(0)
 import tqdm
-def identity(x: tuple[np.ndarray, np.ndarray]):
-	return torch.tensor(x[0], dtype=torch.float64, device=DEVICE), torch.tensor(x[1], dtype=torch.float64, device=DEVICE)
 
+def identity(x: tuple[np.ndarray, np.ndarray]):
+	return torch.tensor(x[0], dtype=torch.float64), torch.tensor(x[1], dtype=torch.float64)
 
 class SkipConnection(torch.nn.Module):
 	def __init__(self, layers):
@@ -210,16 +251,39 @@ class SkipConnection(torch.nn.Module):
 		return torch.concat([self.actual(x), x], dim=1)
 
 
+class ParallelModuleList(torch.nn.Module):
+	def __init__(self, models):
+		super().__init__()
+		self.models = models
+
+	def forward(self, x):
+		out = torch.concat([layer(x) for layer in (self.models)], dim=1)
+		return out
+
+
 if __name__ == '__main__':
+	# test norms
+	data = pl.read_parquet('Dataset/train/v1/train_45.parquet', n_rows=2_000).drop('sample_id')
+	dd = data.to_numpy()
+	print(dd.shape)
+	# print(dd[:20, None])
+	for k in (preprocess_functions.keys()):
+		d = preprocess_functions[k]['norm'](dd)
+		tt = preprocess_functions[k]['denorm'](d[1])
+		print(k, np.sum(np.abs(dd[:, 556:] - tt)))
+		# print(dd[:, 556:][:5, 0])
+		# print(tt[:5, 0])
+
 	BATCH_SIZE = 200
-	sqldloader = DataLoader(CustomSQLDataset(), # batch_size=BATCH_SIZE, shuffle=True,
+	dset = CustomSQLDataset(norm_method='none')
+	sqldloader = DataLoader(dset, # batch_size=BATCH_SIZE, shuffle=True,
 						 num_workers=4, prefetch_factor=5,# pin_memory=True, pin_memory_device='cuda',
-						 batch_sampler=tdata.BatchSampler(tdata.RandomSampler(CustomSQLDataset()), batch_size=BATCH_SIZE, drop_last=False),
+						 batch_sampler=tdata.BatchSampler(tdata.RandomSampler(dset, generator=torch.Generator().manual_seed(0)), batch_size=BATCH_SIZE, drop_last=False),
 						 collate_fn=identity,)
 						#  generator=torch.Generator(device='cuda'))
 	# cc = conns.getconn()
-	for xs, ys in enumerate(tqdm.tqdm(sqldloader)):
-		pass
+	# for xs, ys in enumerate(tqdm.tqdm(sqldloader)):
+	# 	pass
 	# ids = [random.randrange(0, 10_091_520) for i in range(BATCH_SIZE)]
 	t0 = time.time()
 	# sampl = iter(tdata.RandomSampler(CustomSQLDataset()))

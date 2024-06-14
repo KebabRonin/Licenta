@@ -134,7 +134,6 @@ def main():
 	plott(init_err, finl_err)
 	return
 
-
 if __name__ == '__main__':
 	main()
 

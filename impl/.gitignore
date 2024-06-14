@@ -2,6 +2,7 @@ CatBoostModel
 Models/MLP/Saved
 *.pt
 *.pickle
+venv_*
 *.parquet
 __pycache__
 fast-kan

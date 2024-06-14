@@ -4,25 +4,36 @@ import polars as pl
 from tqdm import trange
 from torchmetrics.regression import R2Score
 from torch.nn import L1Loss
-
-valid = pl.read_parquet("Dataset/train/v1/train_40.parquet", n_rows=100_000)
-valid.drop("sample_id")
-valid_in = normalize_subset(valid, in_vars, method='none')
-valid_out = normalize_subset(valid, out_vars, method='none')
-valid_out = torch.tensor(valid_out.to_numpy())
-
+torch.set_default_dtype(torch.float64)
+# valid = pl.read_parquet("Dataset/train/v1/train_40.parquet", n_rows=100_000)
+# valid.drop("sample_id")
+# valid_in = normalize_subset(valid, in_vars, method='none')
+# valid_out = normalize_subset(valid, out_vars, method='none')
+# valid_out = torch.tensor(valid_out.to_numpy())
+dset = CustomSQLDataset(norm_method="none")
+splits = get_splits()
+print(splits)
+trs = tdata.random_split(dset, splits, generator=torch.Generator().manual_seed(50))
 weights = pl.read_csv("Dataset/weights.csv").drop('sample_id').cast(pl.Float64)
-dlen = valid.select(pl.len()).item()
-submission = weights.clear(dlen)
-out_schema=weights.schema
+# out_schema=weights.schema
 weights = weights.to_numpy()[0]
 print("Read data")
 
-batch_size = 10_000
+batch_size = 1_000
+sqldloader = DataLoader(trs[-1], num_workers=0,
+						batch_sampler=tdata.BatchSampler(tdata.SequentialSampler(trs[-1]), batch_size=batch_size, drop_last=False), #
+						collate_fn=identity)
+valid_in, valid_out = next(iter(sqldloader))
+# dlen = valid_in.shape[0]
+# submission = weights.clear(dlen)
+valid_out = valid_out * weights
 model = cloudpickle.load(open("gmm_model.pickle", 'rb'))
-prediction = torch.tensor(np.concatenate([model.predict(
-		np.array([i for i in range(len(in_vars))]), valid_in.slice(i, batch_size).to_numpy()
-	) for i in trange(0, dlen, batch_size)]))
+prediction = torch.tensor(model.predict(
+		np.array([i for i in range(len(in_vars))]), valid_in), dtype=torch.float64)
+prediction = prediction * weights
+# prediction = torch.tensor(np.concatenate([model.predict(
+# 		np.array([i for i in range(len(in_vars))]), valid_in.slice(i, batch_size).to_numpy()
+# 	) for i in trange(0, dlen, batch_size)]))
 
 
 r2score = R2Score(num_outputs=368, multioutput="raw_values")
@@ -67,3 +78,14 @@ print("Actual  r2:", notnice/len(out_vars))
 print("True", tru)
 plt.plot(r2.cpu())
 plt.show()
+prediction = prediction.cpu()
+valid_out = valid_out.cpu()
+from mpl_toolkits.basemap import Basemap
+while True:
+	c = input("column name:")
+	c = out_vars.index(c)
+	plt.plot(prediction[:, c], label='pred')
+	plt.plot(valid_out[:, c], label='actual')
+	plt.legend()
+	plt.title(out_vars[c])
+	plt.show()
