@@ -1,4 +1,4 @@
-import bigframes.dataframe
+# import bigframes.dataframe
 import google
 import google.auth
 from google.cloud import aiplatform, bigquery

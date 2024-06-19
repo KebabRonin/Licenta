@@ -56,7 +56,7 @@ def expand_vars(vars: list[str]):
 
 import polars as pl, json, matplotlib.pyplot as plt
 import numpy as np, torch, sys
-sys.stdout.reconfigure(encoding='utf-8')
+# sys.stdout.reconfigure(encoding='utf-8')
 
 
 in_vars = expand_vars(in_vars)
@@ -240,7 +240,7 @@ DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 import tqdm
 
 def identity(x: tuple[np.ndarray, np.ndarray]):
-	return torch.tensor(x[0], dtype=torch.float64), torch.tensor(x[1], dtype=torch.float64)
+	return torch.tensor(x[0]), torch.tensor(x[1])
 
 class SkipConnection(torch.nn.Module):
 	def __init__(self, layers):
