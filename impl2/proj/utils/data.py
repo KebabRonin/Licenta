@@ -1,4 +1,4 @@
-in_vars = [
+in_vars_e = [
 	("state_t", 60),
 	("state_q0001", 60),
 	("state_q0002", 60),
@@ -26,7 +26,7 @@ in_vars = [
 	("pbuf_N2O", 60), # 27-59 are constant (=)
 ]
 
-out_vars = [
+out_vars_e = [
 	("ptend_t", 60),
 	("ptend_q0001", 60), # 0-11 zeroed by submission weights
 	("ptend_q0002", 60), # 0-14 zeroed by submission weights
@@ -43,7 +43,7 @@ out_vars = [
 	("cam_out_SOLLD", 1),
 ]
 
-zeroed_vars = [
+zeroed_vars_e = [
 	("ptend_q0001", 12), # 0-11 zeroed by submission weights
 	("ptend_q0002", 15), # 0-14 zeroed by submission weights
 	("ptend_q0003", 12), # 0-11 zeroed by submission weights
@@ -57,14 +57,17 @@ def expand_vars(vars: list[str]):
 import json, numpy as np
 
 # var names
-in_vars = expand_vars(in_vars)
-out_vars = expand_vars(out_vars)
+in_vars = expand_vars(in_vars_e)
+out_vars = expand_vars(out_vars_e)
 in_len, out_len = len(in_vars), len(out_vars)
 all_len = in_len + out_len
-zeroed_vars = expand_vars(zeroed_vars)
+zeroed_vars = expand_vars(zeroed_vars_e)
 non_zeroed_out_vars = [v for v in out_vars if v not in zeroed_vars]
 all_vars = ["sample_id"] + in_vars + out_vars
 
+# for plots
+in_ticks = ([0, 60, 120, 180, 240, 300, 360, 376, 436, 496], ['state_t', 'state_q0001', 'state_q0002', 'state_q0003', 'state_u', 'state_v', 'cam', 'pbuf_ozone', 'pbuf_CH4', 'pbuf_N2O'])
+out_ticks = ([0, 60, 120, 180, 240, 300, 360], ['ptend_t', 'ptend_q0001', 'ptend_q0002', 'ptend_q0003', 'ptend_u', 'ptend_v', 'cam_out'])
 
 data_insights = json.load(open("data_insights.json"))
 

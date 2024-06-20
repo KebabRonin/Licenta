@@ -49,13 +49,13 @@ def get_pred(sample: pl.DataFrame, norm: str):
 	weighted = pl.DataFrame((prediction.numpy()[None, :] * weights).squeeze(), schema=out_schema)
 	return weighted
 
-batch_size = 75_000
+batch_size = 25_000
 norm = 'standardisation'
 
 
 import dill
 with torch.no_grad():
-	model = dill.load(open('Models/resnet_parallel/model_checkpoint_batch_4_epoch_4.pickle', 'rb'), ignore=True)['model']
+	model = dill.load(open('model.pickle', 'rb'))#['model']
 	model.to(DEVICE)
 	print("Getting r2")
 	r2 = get_r2(model, norm)
@@ -75,7 +75,7 @@ with torch.no_grad():
 			s = pl.Series(values=[(data_insights[name]["mean"] * weights[i]) for _ in range(le)], name=name)
 			submission.replace_column(i, s)
 
-	sample_ids = test.select(pl.col("sample_id")).collect()
+	sample_ids = test.select(pl.col("sample_id")).collect().get_column('sample_id')
 	submission.insert_column(0, sample_ids)
 	# print(submission['ptend_q0002_12'])
 	submission.write_parquet('submission.parquet')

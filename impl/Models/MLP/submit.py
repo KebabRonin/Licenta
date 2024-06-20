@@ -65,10 +65,10 @@ def get_pred(sample: pl.DataFrame):
 	weighted = pl.DataFrame((df.to_numpy()[None, :] * weights).squeeze(), schema=out_schema)
 	return weighted
 
-batch_size = 75_000
+batch_size = 25_000
 
 with torch.no_grad():
-	model = torch.load('model.pt')
+	model = torch.load('model_resnet5_worse.pt')
 	model.to(DEVICE)
 	r2 = get_r2(model)
 	model.eval()
@@ -79,7 +79,7 @@ with torch.no_grad():
 	# print(submission['ptend_q0002_12'])
 
 	for i in range(len(submission.columns)): # without sample_id
-		if r2[i] < 0:
+		if r2[i] <= 0:
 			print(out_vars[i])
 			name = submission.columns[i]
 			s = pl.Series(values=[(data_insights[name]["mean"] * weights[i]) for _ in range(le)], name=name)

@@ -195,6 +195,37 @@ from torch.utils.data import Dataset, DataLoader
 import torch.utils.data as tdata
 import psycopg2.pool as psycopg2_pool
 conns = psycopg2_pool.ThreadedConnectionPool(1, 10, dbname="Data", user="postgres", password="admin", host="localhost")
+
+
+class TimestepSQLDataset(Dataset):
+	"""One sample is of size 384, which is one timestep over all map locations
+
+	Args:
+		norm_method (str): Normalization method, one of preprocess_functions.keys()
+	"""
+	def __init__(self, norm_method):
+		self.norm_method = norm_method
+		self.norm = preprocess_functions[norm_method]['norm']
+		self.denorm = preprocess_functions[norm_method]['denorm']
+
+	def __len__(self):
+		return int(10_091_520 // 384) # 26_280
+
+	def __getitem__(self, idx):
+		global conns
+		conn = conns.getconn()
+
+		df = pl.read_database(f"select * from public.train where {idx*384} <= sample_id_int and sample_id_int < {(idx+1)*384} order by sample_id_int;", connection=conn)
+		df = df.drop('sample_id_int')
+		rez = self.norm(df.to_numpy())
+
+		conns.putconn(conn)
+		return rez #rez[:, :556], rez[:, 556:]
+	def __getitems__(self, ids):
+		ls = [self.__getitem__(i) for i in ids]
+		return np.concatenate([l[0] for l in ls], axis=0), np.concatenate([l[1] for l in ls], axis=0)
+
+
 class CustomSQLDataset(Dataset):
 	def __init__(self, norm_method = "+mean/std"):
 		self.norm_method = norm_method

@@ -11,12 +11,9 @@
             "id": "c80b02b2939eeff1",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "pdf",
               "state": {
-                "file": "Presentation.md",
-                "mode": "source",
-                "backlinks": true,
-                "source": false
+                "file": "PDF/Misc/handout12.pdf"
               }
             }
           }
@@ -86,7 +83,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Presentation.md",
+                "file": "PDF/Misc/handout12.pdf",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -103,7 +100,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Presentation.md",
+                "file": "PDF/Misc/handout12.pdf",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -126,7 +123,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Presentation.md"
+                "file": "PDF/Misc/handout12.pdf"
               }
             }
           }
@@ -153,21 +150,21 @@
   },
   "active": "c80b02b2939eeff1",
   "lastOpenFiles": [
+    "PDF/other_resnet.pdf",
+    "impl2/proj/tempCodeRunnerFile.py",
+    "Presentation.md",
     "impl2/Models/mlp_simple_bottleneck32batch_full_shuffle/model_checkpoint_batch_1_prev_0-08.pickle",
     "impl2/Models/mlp_simple_bottleneck32batch_full_shuffle/model_checkpoint_batch_1.pickle",
     "References.md",
     "PDF/ClimSim.pdf",
-    "PDF/other_resnet.pdf",
     "impl2/Models/mlp_simple_bottleneck32batch_full_shuffle/model_checkpoint_batch_0.pickle",
     "Questions.md",
     "PDF/problem_history_and_preds2003.pdf",
-    "Presentation.md",
     "Ideas.md",
     "PDF/problem_history_2004.pdf",
     "impl/model_checkpoint_11-Jun-2024-12-38-00.pt",
     "impl/model-resnet5good.pt",
     "impl/model_checkpoint_09-Jun-2024-18-49-10.pt",
-    "impl/model_checkpoint_09-Jun-2024-18-20-11.pt",
     "impl/res5_v2_maybe_maybe.png",
     "Glossary.md",
     "tldraw/Tldraw 2024-05-05 6.49PM.md",

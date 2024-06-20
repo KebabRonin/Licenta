@@ -135,6 +135,9 @@ class MLP_60_split(nn.Module):
 	def forward(self, x):
 		return self.model(x)
 
+class MLP(nn.Module):
+	pass
+
 model = MLP_60_split(1024, nn.SiLU)
 
 if __name__ == '__main__':

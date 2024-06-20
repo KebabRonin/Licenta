@@ -2,6 +2,7 @@ import ResNet
 from train import train, valid
 import utils.data
 import utils.dset as dset, utils
+import seaborn as sb, numpy as np
 import torch.utils.data as tdata
 from torchmetrics.regression import R2Score
 import torch, dill
@@ -46,37 +47,62 @@ def load_model(path):
 	else:
 		d['loss'] = getattr(torch.nn, d['loss'])().to(utils.nn.device)
 	return d
+def plot_correlation(test_in, test_out):
+	xticks, yticks = utils.data.in_ticks, utils.data.out_ticks
+
+	test_in, test_out = test_in.cpu().numpy(), test_out.cpu().numpy()
+
+	corm = np.zeros((utils.data.out_len, utils.data.in_len))
+	for i in tqdm.trange(utils.data.in_len, position=0, desc="Inputs", ncols=100):
+		for j in range(utils.data.out_len):
+			m = np.corrcoef(test_out[:, j], test_in[:, i])
+			corm[j, i] = m[0, 1] # getcov(out, in)
+	plt.matshow(corm)
+
+	print(corm[20, 490])
+
+	plt.xticks(*xticks, ha='left')
+	plt.yticks(*yticks)
+	plt.grid()
+	plt.colorbar()
+	plt.show()
+
+def plod_distr(test_in, test_out):
+	fig = plt.figure()
+	ax = fig.add_subplot(projection='3d')
 
 if __name__ == '__main__':
 	torch.set_default_dtype(torch.float64)
-	d = load_model(r'Models\kan\model_checkpoint_batch_0_epoch_3.pickle')
-	batches=5
+	# d = load_model('Models/resnet_parallel/model_checkpoint_batch_4_epoch_4.pickle')
+	batches=2
 	import matplotlib.pyplot as plt
-
-	trs = dset.get_splits(d['norm_method'], dset_class=dset.TimestepSQLDataset, fraction=0.05)
+	#d['norm_method']
+	trs = dset.get_splits('none', dset_class=dset.TimestepSQLDataset, fraction=0.05)
 
 	test_in, test_out = next(iter(tdata.DataLoader(trs[-1], batch_size=batches, drop_last=False, collate_fn=utils.nn.identity)))
-	# model = d['model'].to(utils.nn.device)
-	# errs = test(model, test_in, test_out)
-	# plt.plot(errs)
-	# for j in range(5):
-	# 	# for i in range(5):
-	# 		i=4
-	# 		d = load_model(f'Models/resnet_parallel_all/model_checkpoint_batch_{j}_epoch_{i}.pickle')
-	# 		model = d['model'].to(utils.nn.device)
-	# 		errs = test(model, test_in, test_out)
-	# 		plt.plot(errs, label=f'epoch {i} batch {j}')
-	# 		# del model
-	plt.axis((None, None, -1.5, 1.5))
-	plt.legend()
-	# import CatBoost
-	# model = CatBoost.CatBoost()
-	model = d['model'].to(utils.nn.device)
+
+	# plot_correlation(test_in, test_out)
+	plt.hist(test_in.cpu().numpy()[:, 0], bins=100)
+	plt.stackplot(range(556), test_in.cpu().numpy()[0, :])
+	plt.show()
+	exit()
+	model = torch.load('../impl/model.pt')
+	if isinstance(model, dict):
+		d = model
+		model = d['model'].to(utils.nn.device)
+
 	errs = test(model, test_in, test_out)
 	print(errs.mean())
 	print(torch.tensor(list(filter(lambda x: x > 0, errs))).mean())
+
+	plt.plot(errs, label=f'')
+	plt.axis((0, 367, -0.5, 1.1))
+	xticks = utils.data.out_ticks
+	plt.xticks(*xticks, ha='left')
+	plt.grid()
 	plt.show()
-	r2score = R2Score(num_outputs=utils.data.out_len, multioutput='raw_values').to(utils.nn.device)
+
+	r2score = R2Score(num_outputs=utils.data.out_len).to(utils.nn.device)
 	model.eval()
 	with torch.no_grad():
 		import numpy as np, xarray as xr
