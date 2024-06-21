@@ -20,14 +20,14 @@ def valid(model, ins, outs):
 	with torch.no_grad():
 		predictions = model(ins)
 	loss_value = r2score(predictions, outs).item()
-	ins, outs = ins.to('cpu'), outs.to('cpu')
+	# ins, outs = ins.to('cpu'), outs.to('cpu')
 	return loss_value
 
 def train(model, batch_dloader, optimizer, loss):
 	model.train()
 	model.to(utils.nn.device)
 	losses = []
-	pbar = tqdm.tqdm(batch_dloader, position=1, desc="Minibatches", ncols=100)
+	pbar = tqdm.tqdm(batch_dloader, position=2, desc="Minibatches", ncols=100)
 	for features, targets in pbar:
 		features, targets = features.to(utils.nn.device), targets.to(utils.nn.device)
 		optimizer.zero_grad()

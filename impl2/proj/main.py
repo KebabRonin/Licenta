@@ -14,15 +14,15 @@ def train_loop(model, optimizer, loss, batch_size, norm_method, model_name, epoc
 			batch_sampler=tdata.BatchSampler(tdata.SequentialSampler(trs[-1]), batch_size=2_000, drop_last=False), #
 			collate_fn=utils.nn.identity)))
 	# valid_in, valid_out = next(iter(tdata.DataLoader(trs[-1], batch_size=1+int(batch_size//2), collate_fn=utils.nn.identity)))
-	for j in tqdm.trange(5, position=2, desc="Batches", ncols=100):
+	for j in tqdm.trange(0, 5, position=2, desc="Batches", ncols=100):
 		batch = trs[j]
-		pbar = tqdm.trange(epochs, position=0, desc="Epochs", ncols=100)
+		pbar = tqdm.trange(epochs, position=1, desc="Epochs", ncols=100)
 		vloss = valid(model, valid_in, valid_out)
 		pbar.set_postfix_str(f"{vloss}")
 		for i in pbar:
 			# pbar = tqdm.tqdm(trs[:-4], position=0, desc="Batches")
 			dataloader = tdata.DataLoader(batch, num_workers=4, prefetch_factor=2,
-					batch_sampler=tdata.BatchSampler(tdata.RandomSampler(batch, generator=torch.Generator().manual_seed(i)), batch_size=batch_size, drop_last=True),
+					batch_sampler=tdata.BatchSampler(tdata.RandomSampler(batch, generator=torch.Generator().manual_seed(i)), batch_size=batch_size, drop_last=False),
 					collate_fn=utils.nn.identity)
 			# dataloader = tdata.DataLoader(batch, num_workers=4, batch_size=batch_size, drop_last=False, collate_fn=utils.nn.identity,
 			# 	prefetch_factor=2, shuffle=True)
@@ -55,19 +55,20 @@ def load_model(path):
 if __name__ == '__main__':
 	print('enter main')
 	torch.set_default_dtype(torch.float64)
-	import ResNet
-	model = ResNet.ResNetParallelAll(512, torch.nn.SiLU,)
+	import fastkan
+	model = fastkan.FasterKAN([utils.data.in_len, 30, utils.data.out_len], grid_min=-100, grid_max=100, num_grids=8)
 	optimizer= torch.optim.RAdam(model.parameters(), lr=0.001, weight_decay=0.01)
 	loss = torch.nn.MSELoss()
-	batch_size = 10*384
-	model_name = 'resnet_parallel_silu' #'mlp_simple_bottleneck32batch_full_shuffle'
-
+	batch_size = 30*384
+	model_name = 'kan' #'mlp_simple_bottleneck32batch_full_shuffle'
+	norm = 'minmax100'
+	epochs=30
 	restart_from_best = False
 
 	import os
 	if not os.path.exists(f"Models/{model_name}"):
 		os.mkdir(f"Models/{model_name}")
-		train_loop(model, optimizer, loss, batch_size, 'standardisation', model_name, epochs=5)
+		train_loop(model, optimizer, loss, batch_size, norm, model_name, epochs=epochs)
 	else:
 		import glob
 		fname = f'Models/{model_name}/model_checkpoint_batch_*.pickle'
@@ -78,6 +79,6 @@ if __name__ == '__main__':
 			d = load_model(fname)
 			print(d['optimizer'], d['loss'], 'batch size ' + str(d['batch_size']), d['norm_method'], sep='|')
 			print(d['model'])
-			train_loop(epochs=5, **d)
+			train_loop(epochs=epochs, **d)
 		else:
-			train_loop(model, optimizer, loss, batch_size, 'standardisation', model_name, epochs=5)
+			train_loop(model, optimizer, loss, batch_size, norm, model_name, epochs=epochs)

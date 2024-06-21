@@ -51,6 +51,8 @@ class TimestepSQLDataset(Dataset):
 		return int(10_091_520 // 384) # 26_280
 
 	def __getitem__(self, idx):
+		if not isinstance(idx, int):
+			return self.__getitems__(idx)
 		global conns
 		conn = conns.getconn()
 

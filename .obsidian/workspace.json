@@ -13,7 +13,7 @@
             "state": {
               "type": "pdf",
               "state": {
-                "file": "PDF/Misc/handout12.pdf"
+                "file": "PDF/Misc/ex-book.17mai.pdf"
               }
             }
           }
@@ -83,7 +83,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "PDF/Misc/handout12.pdf",
+                "file": "PDF/Misc/ex-book.17mai.pdf",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -100,7 +100,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "PDF/Misc/handout12.pdf",
+                "file": "PDF/Misc/ex-book.17mai.pdf",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -123,7 +123,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "PDF/Misc/handout12.pdf"
+                "file": "PDF/Misc/ex-book.17mai.pdf"
               }
             }
           }
@@ -131,8 +131,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -150,21 +149,21 @@
   },
   "active": "c80b02b2939eeff1",
   "lastOpenFiles": [
+    "impl/gmm-report.txt",
+    "impl2/proj/norm_test.py",
+    "impl2/proj/sumtest.py",
+    "impl2/proj/utils/sumtest.py",
+    "impl2/proj/__pycache__/testt.cpython-311.pyc",
+    "impl2/proj/testt.py",
+    "Questions.md",
+    "PDF/Misc/ex-book.17mai.pdf",
+    "PDF/Misc/handout12.pdf",
+    "impl2/Models/kan",
     "PDF/other_resnet.pdf",
     "impl2/proj/tempCodeRunnerFile.py",
     "Presentation.md",
-    "impl2/Models/mlp_simple_bottleneck32batch_full_shuffle/model_checkpoint_batch_1_prev_0-08.pickle",
-    "impl2/Models/mlp_simple_bottleneck32batch_full_shuffle/model_checkpoint_batch_1.pickle",
     "References.md",
-    "PDF/ClimSim.pdf",
-    "impl2/Models/mlp_simple_bottleneck32batch_full_shuffle/model_checkpoint_batch_0.pickle",
-    "Questions.md",
-    "PDF/problem_history_and_preds2003.pdf",
     "Ideas.md",
-    "PDF/problem_history_2004.pdf",
-    "impl/model_checkpoint_11-Jun-2024-12-38-00.pt",
-    "impl/model-resnet5good.pt",
-    "impl/model_checkpoint_09-Jun-2024-18-49-10.pt",
     "impl/res5_v2_maybe_maybe.png",
     "Glossary.md",
     "tldraw/Tldraw 2024-05-05 6.49PM.md",

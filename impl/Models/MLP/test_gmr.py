@@ -1,6 +1,6 @@
 import gmr, cloudpickle
 from my_utils import *
-import polars as pl
+import polars as pl, numpy as np
 from tqdm import trange
 from torchmetrics.regression import R2Score
 from torch.nn import L1Loss
@@ -13,28 +13,28 @@ torch.set_default_dtype(torch.float64)
 dset = CustomSQLDataset(norm_method="none")
 splits = get_splits()
 print(splits)
-trs = tdata.random_split(dset, splits, generator=torch.Generator().manual_seed(50))
+trs = tdata.random_split(dset, splits, generator=torch.Generator().manual_seed(0))
 weights = pl.read_csv("Dataset/weights.csv").drop('sample_id').cast(pl.Float64)
 # out_schema=weights.schema
 weights = weights.to_numpy()[0]
 print("Read data")
 
-batch_size = 1_000
+batch_size = 3_000
 sqldloader = DataLoader(trs[-1], num_workers=0,
-						batch_sampler=tdata.BatchSampler(tdata.SequentialSampler(trs[-1]), batch_size=batch_size, drop_last=False), #
+						batch_sampler=tdata.BatchSampler(tdata.RandomSampler(trs[-1], generator=torch.Generator().manual_seed(0)), batch_size=batch_size, drop_last=False), #
 						collate_fn=identity)
 valid_in, valid_out = next(iter(sqldloader))
+vout = valid_out.numpy(dtype=np.float64)
 # dlen = valid_in.shape[0]
 # submission = weights.clear(dlen)
-valid_out = valid_out * weights
 model = cloudpickle.load(open("gmm_model.pickle", 'rb'))
 prediction = torch.tensor(model.predict(
 		np.array([i for i in range(len(in_vars))]), valid_in), dtype=torch.float64)
-prediction = prediction * weights
 # prediction = torch.tensor(np.concatenate([model.predict(
 # 		np.array([i for i in range(len(in_vars))]), valid_in.slice(i, batch_size).to_numpy()
 # 	) for i in trange(0, dlen, batch_size)]))
 
+print(prediction.dtype, valid_out.dtype)
 
 r2score = R2Score(num_outputs=368, multioutput="raw_values")
 r2score_true = R2Score(num_outputs=368)
@@ -77,6 +77,9 @@ print("*Nicer* r2:", nicer/len(non_zeroed_out_vars))
 print("Actual  r2:", notnice/len(out_vars))
 print("True", tru)
 plt.plot(r2.cpu())
+plt.xticks([0, 60, 120, 180, 240, 300, 360], ['ptend_t', 'ptend_q0001', 'ptend_q0002', 'ptend_q0003', 'ptend_u', 'ptend_v', 'cam_out'])
+plt.axis((0, 368, -1, 1.2))
+plt.grid()
 plt.show()
 prediction = prediction.cpu()
 valid_out = valid_out.cpu()

@@ -24,7 +24,7 @@ from torch.utils.data import DataLoader
 # === PARAMS ===
 NUM_EPOCHS = 1
 batch_size = 4096
-ITERS_PER_BATCH = 1
+ITERS_PER_BATCH = 100
 # none, +mean or +mean/std
 NORMALIZATION = "+mean/std"
 
@@ -56,7 +56,7 @@ def main():
 	model, tbatches, normalization, trail = load_model()
 	model.to(DEVICE)
 	print(f"{tbatches=}")
-	loss_function = torch.nn.L1Loss().to(DEVICE)
+	loss_function = torch.nn.MSELoss().to(DEVICE)
 	# loss_function = R2Score(num_outputs=368).to(DEVICE)
 	# optimizer = torch.optim.Adadelta(model.parameters(), lr = 1e-3, maximize=True)
 	# optimizer = torch.optim.Adadelta(model.parameters(), lr=0.014666056303807039, ) #, maximize=True)
@@ -78,22 +78,23 @@ def main():
 	splits = get_splits()
 	# print(splits)
 	trs = tdata.random_split(dset, splits, generator=torch.Generator().manual_seed(50))
-	for batch in tqdm(trs[:1], position=0, leave=True, desc=f"Batches", miniters=1, ncols=_pbar_display_ncols): #tbatches%(len(splits)-VALID_RESERVE):-VALID_RESERVE
-		for ib in trange(ITERS_PER_BATCH, position=1, leave=True, desc=f"Iterations this batch", miniters=1, ncols=_pbar_display_ncols):
-			sqldloader = DataLoader(batch, num_workers=4,
-									batch_sampler=tdata.BatchSampler(tdata.RandomSampler(batch, generator=torch.Generator().manual_seed(ib)), batch_size=batch_size, drop_last=False), #
-									collate_fn=identity,
-									prefetch_factor=1)
-			pbar = tqdm(sqldloader, ncols=_pbar_display_ncols, position=2, leave=True, desc="Mini-Batches", miniters=1)
-			for train_in, train_out in pbar:
-				# print(train_in.device, train_out.device)
-				train_in, train_out = train_in.to(DEVICE), train_out.to(DEVICE)
-				optimizer.zero_grad(set_to_none=True)
-				pred = model(train_in)
-				loss = loss_function(pred, train_out)
-				loss.backward()
-				optimizer.step()
-				pbar.set_postfix_str(f"{loss.item():.10f}", refresh=False)
+	# for batch in tqdm(trs[:1], position=0, leave=True, desc=f"Batches", miniters=1, ncols=_pbar_display_ncols): #tbatches%(len(splits)-VALID_RESERVE):-VALID_RESERVE
+	batch = trs[0]
+	for ib in trange(ITERS_PER_BATCH, position=1, leave=True, desc=f"Iterations this batch", miniters=1, ncols=_pbar_display_ncols):
+		sqldloader = DataLoader(batch, num_workers=4,
+								batch_sampler=tdata.BatchSampler(tdata.RandomSampler(batch, generator=torch.Generator().manual_seed(ib)), batch_size=batch_size, drop_last=False), #
+								collate_fn=identity,
+								prefetch_factor=1)
+		pbar = tqdm(sqldloader, ncols=_pbar_display_ncols, position=2, leave=True, desc="Mini-Batches", miniters=1)
+		for train_in, train_out in pbar:
+			# print(train_in.device, train_out.device)
+			train_in, train_out = train_in.to(DEVICE), train_out.to(DEVICE)
+			optimizer.zero_grad(set_to_none=True)
+			pred = model(train_in)
+			loss = loss_function(pred, train_out)
+			loss.backward()
+			optimizer.step()
+			pbar.set_postfix_str(f"{loss.item():.10f}", refresh=False)
 		tbatches += 1
 		trail.append(validate_model(model))
 		print("Val R2:", trail[-1])

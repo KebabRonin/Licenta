@@ -33,7 +33,8 @@ def plot_model(model_path):
 	# plt.plot(intervals, d['losses'])
 	# # for x in d['train_losses']:
 	# # 	plt.plot(x)
-	plt.plot(sum(d['train_losses'], []))
-	plt.show()
-
-plot_model(r'Models\resnet_parallel\model_checkpoint_batch_4_epoch_4.pickle')
+	# plt.plot(sum(d['train_losses'], []))
+	# plt.show()
+import dill
+dill.load(open('model.pickle', 'rb'))
+# plot_model(r'Models\kan\model_checkpoint_batch_4_epoch_29.pickle')

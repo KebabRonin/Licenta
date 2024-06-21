@@ -72,14 +72,3 @@ preprocess_functions = {
 	"centered": {"norm": preprocess_centered, "denorm": preprocess_decentered},
 	"none": {"norm": preprocess_none, "denorm": preprocess_denone},
 }
-
-if __name__ == "__main__":
-	mock_len = 5_000
-	mock_in, mock_out, mock_all = (np.random.rand(mock_len, in_len)), (np.random.rand(mock_len, out_len)), (np.random.rand(mock_len, all_len))
-	print(mock_in.dtype)
-	for k, v in preprocess_functions.items():
-		print(f'\n=== {k} ===',
-		'\n	MAE in :', abs(mock_in - v['denorm'](v['norm'](mock_in))).max(),
-		'\n	MAE out:', abs(mock_out - v['denorm'](v['norm'](mock_out))).max(),
-		'\n	MAE all:', abs(mock_all - v['denorm'](v['norm'](mock_all))).max(),
-		)

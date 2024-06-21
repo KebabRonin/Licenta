@@ -51,6 +51,8 @@ except Exception as e:
 
 import matplotlib.pyplot as plt
 plt.plot(scores)
+plt.xticks([0, 60, 120, 180, 240, 300, 360], ['ptend_t', 'ptend_q0001', 'ptend_q0002', 'ptend_q0003', 'ptend_u', 'ptend_v', 'cam_out'])
+plt.grid()
 plt.show()
 
 # l = valid.select(pl.len()).collect().item()

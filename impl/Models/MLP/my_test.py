@@ -85,7 +85,7 @@ class InteractiveLegend(object):
     def show(self):
         plt.show()
 
-def validate_model(model, ins=None, outs=None, ids=None, interactive=False, normalisation='+mean/std', modelname='', ax=None):
+def validate_model(model, ins=None, outs=None, ids=None, interactive=False, normalisation='+mean/std', modelname='', ax=None, ddd=None):
 	if ins is None or outs is None:
 		dset = CustomSQLDataset(norm_method=normalisation)
 		splits = get_splits()
@@ -119,24 +119,25 @@ def validate_model(model, ins=None, outs=None, ids=None, interactive=False, norm
 		# print(outs[0][:20])
 		tru = r2score_true(prediction, outs)
 		if interactive:
+			# prediction, outs = torch.tensor(preprocess_destandardisation(prediction.cpu().numpy())), torch.tensor(preprocess_destandardisation(outs.cpu().numpy()))
 			r2 = r2score(prediction, outs)
 			mae = maescore(prediction, outs)
-			# header=f"{'Name':^15}|{'Actual':^10}|{'Pred':^10}|{'Diff':^10}|{'R2':^10}|*|"
-			# print(f"{'&':=^186}")
-			# print(*(header for _ in range(3)), sep='')
-			# print(f"{'&':=^186}")
-			# fstr = "{vname:<15}|{act:>10.5f}|{pred:>10.5f}|{diff:>10.5f}|{r2ll:>10.5f}|*|"
-			# for i in range(0, len(out_vars), 3):
-			# 	print(*(
-			# 		fstr.format(
-			# 			vname=out_vars[idx],
-			# 			act=outs[0][idx],
-			# 			pred=prediction[0][idx],
-			# 			diff=outs[0][idx] - prediction[0][idx],
-			# 			r2ll=r2[idx],
-			# 		) for idx in range(i, i+3) if idx < len(out_vars)
-			# 	), sep='')
-			# print(f"{'&':=^186}")
+			header=f"{'Name':^15}|{'Actual':^10}|{'Pred':^10}|{'Diff':^10}|{'R2':^10}|*|"
+			print(f"{'&':=^186}")
+			print(*(header for _ in range(3)), sep='')
+			print(f"{'&':=^186}")
+			fstr = "{vname:<15}|{act:>10.5f}|{pred:>10.5f}|{diff:>10.5f}|{r2ll:>10.5f}|*|"
+			for i in range(0, len(out_vars), 3):
+				print(*(
+					fstr.format(
+						vname=out_vars[idx],
+						act=outs[0][idx],
+						pred=prediction[0][idx],
+						diff=outs[0][idx] - prediction[0][idx],
+						r2ll=r2[idx],
+					) for idx in range(i, i+3) if idx < len(out_vars)
+				), sep='')
+			print(f"{'&':=^186}")
 			mask = np.ones(len(r2), dtype=bool)
 			ok_indices = [idx for idx in range(len(out_vars)) if out_vars[idx] in zeroed_vars]
 			mask[ok_indices] = False
@@ -151,6 +152,7 @@ def validate_model(model, ins=None, outs=None, ids=None, interactive=False, norm
 			print("Actual  r2:", notnice/len(out_vars))
 			print("True", tru)
 			ax.plot(r2.cpu(), label=modelname)
+			ddd[modelname] = r2.cpu()
 			# plt.show()
 			prediction = prediction.cpu()
 			outs = outs.cpu()
@@ -246,7 +248,7 @@ if __name__ == '__main__':
 			if isinstance(model, dict):
 				model = model['model']
 			print(model)
-			validate_model(model, ins, outs, interactive=True, modelname=m, ax=ax) #, ids)
+			validate_model(model, ins, outs, interactive=True, modelname=m, ax=ax, ddd=dict()) #, ids)
 			print(m, 'ok')
 		except Exception as e:
 			print(m, 'fail', e)
