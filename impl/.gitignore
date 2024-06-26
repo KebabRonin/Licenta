@@ -1,4 +1,4 @@
-CatBoostModel
+CatBoostModel*
 Models/MLP/Saved
 *.pt
 *.pickle
