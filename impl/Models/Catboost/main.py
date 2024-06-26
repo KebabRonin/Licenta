@@ -1,15 +1,13 @@
 import polars as pl, numpy as np, os
-from tqdm import tqdm
-from sklearn.metrics import r2_score
-from my_utils import in_vars, out_vars, normalize_subset, non_zeroed_out_vars
+from my_utils import *
 from catboost import CatBoostRegressor
-from torchmetrics.regression import R2Score
+from tqdm import tqdm
 
 # === READ DATA ===
 
-train_files = [f"Dataset/train/v1/train_{i}.parquet" for i in range(49)] # Fara 49, 50, ca e de validare
+# train_files = [f"../impl/Dataset/train/v1/train_{i}.parquet" for i in range(49)] # Fara 49, 50, ca e de validare
 
-train_data = pl.scan_parquet("Dataset/train/v1/train_*.parquet").drop('sample_id')
+train_data = pl.scan_parquet("../impl/Dataset/train/v1/train_*.parquet").drop('sample_id')
 train_len = train_data.select(pl.len()).collect().item()
 
 # === PARAMS ===
@@ -21,7 +19,7 @@ valid_size = 50_000
 batch = train_data.slice(offset=0, length=batch_size).collect()
 train_in = normalize_subset(batch,in_vars).to_numpy()
 train_out = normalize_subset(batch,out_vars)
-valid_data = pl.scan_parquet("Dataset/train/v1/train_49.parquet", n_rows=valid_size).drop('sample_id').collect()
+valid_data = pl.scan_parquet("../impl/Dataset/train/v1/train_49.parquet", n_rows=valid_size).drop('sample_id').collect()
 valid_in = normalize_subset(valid_data, in_vars).to_numpy()
 valid_out = normalize_subset(valid_data, out_vars)
 
@@ -39,13 +37,13 @@ cat_params = {
 	'metric_period':500,
 }
 
-for var_name in tqdm(['ptend_q0002_17', 'ptend_q0002_18']):
-	# if f"{var_name}_model.cbm" in os.listdir("CatBoostModel"):
+for var_name in tqdm(['ptend_q0002_17']):
+	# if var_name in const_out_vars or f"{var_name}_model.cbm" in os.listdir("CatBoostModel8"):
 	# 	continue
 	print(var_name)
 	model = CatBoostRegressor(**cat_params)
 	model.fit(train_in, train_out.select(pl.col(var_name)).to_numpy(), eval_set=(valid_in, valid_out.select(pl.col(var_name)).to_numpy()))
-	model.save_model(f"CatBoostModel/{var_name}_model.cbm")
+	model.save_model(f"CatBoostModel8/{var_name}_model.cbm")
 	print(f"saved {var_name}")
 
 

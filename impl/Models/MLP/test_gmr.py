@@ -10,21 +10,20 @@ torch.set_default_dtype(torch.float64)
 # valid_in = normalize_subset(valid, in_vars, method='none')
 # valid_out = normalize_subset(valid, out_vars, method='none')
 # valid_out = torch.tensor(valid_out.to_numpy())
-dset = CustomSQLDataset(norm_method="none")
-splits = get_splits()
+dset = TimestepSQLDataset(norm_method="none")
+splits = get_splits(0.02)
 print(splits)
 trs = tdata.random_split(dset, splits, generator=torch.Generator().manual_seed(0))
 weights = pl.read_csv("Dataset/weights.csv").drop('sample_id').cast(pl.Float64)
 # out_schema=weights.schema
 weights = weights.to_numpy()[0]
-print("Read data")
 
-batch_size = 3_000
-sqldloader = DataLoader(trs[-1], num_workers=0,
-						batch_sampler=tdata.BatchSampler(tdata.RandomSampler(trs[-1], generator=torch.Generator().manual_seed(0)), batch_size=batch_size, drop_last=False), #
+batch_size = 50
+sqldloader = DataLoader(trs[-5], num_workers=0,
+						batch_sampler=tdata.BatchSampler(tdata.RandomSampler(trs[-5], generator=torch.Generator().manual_seed(0)), batch_size=batch_size, drop_last=False), #
 						collate_fn=identity)
 valid_in, valid_out = next(iter(sqldloader))
-vout = valid_out.numpy(dtype=np.float64)
+print("Read data")
 # dlen = valid_in.shape[0]
 # submission = weights.clear(dlen)
 model = cloudpickle.load(open("gmm_model.pickle", 'rb'))
@@ -40,9 +39,12 @@ r2score = R2Score(num_outputs=368, multioutput="raw_values")
 r2score_true = R2Score(num_outputs=368)
 maescore = L1Loss()
 
-r2 = r2score(prediction, valid_out)
-mae = maescore(prediction, valid_out)
-tru = r2score_true(prediction, valid_out)
+_, v_out = preprocess_standardisation(np.concatenate([valid_in.numpy(), valid_out.numpy()], axis=1))
+_, pred = preprocess_standardisation(np.concatenate([valid_in.numpy(), prediction.numpy()], axis=1))
+v_out, pred = torch.tensor(v_out, dtype=torch.float64), torch.tensor(pred, dtype=torch.float64)
+r2 = r2score(pred, v_out)
+mae = maescore(pred, v_out)
+tru = r2score_true(pred, v_out)
 # print(f"{r2=}")
 # print(f"{mae=}")
 header=f"{'Name':^15}|{'Actual':^10}|{'Pred':^10}|{'Diff':^10}|{'R2':^10}|*|"
@@ -56,9 +58,9 @@ for i in range(0, len(out_vars), 3):
 	print(*(
 		fstr.format(
 			vname=out_vars[idx],
-			act=valid_out[0][idx],
-			pred=prediction[0][idx],
-			diff=valid_out[0][idx] - prediction[0][idx],
+			act=v_out[0][idx],
+			pred=pred[0][idx],
+			diff=v_out[0][idx] - pred[0][idx],
 			r2ll=r2[idx],
 		) for idx in range(i, i+3) if idx < len(out_vars)
 	), sep='')
@@ -81,14 +83,14 @@ plt.xticks([0, 60, 120, 180, 240, 300, 360], ['ptend_t', 'ptend_q0001', 'ptend_q
 plt.axis((0, 368, -1, 1.2))
 plt.grid()
 plt.show()
-prediction = prediction.cpu()
-valid_out = valid_out.cpu()
+pred = pred.cpu()
+v_out = v_out.cpu()
 from mpl_toolkits.basemap import Basemap
 while True:
 	c = input("column name:")
 	c = out_vars.index(c)
-	plt.plot(prediction[:, c], label='pred')
-	plt.plot(valid_out[:, c], label='actual')
+	plt.plot(pred[:, c], label='pred')
+	plt.plot(v_out[:, c], label='actual')
 	plt.legend()
 	plt.title(out_vars[c])
 	plt.show()

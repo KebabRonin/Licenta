@@ -213,7 +213,7 @@ if __name__ == '__main__':
 	# if isinstance(model, dict):
 	# 	model = model['model']
 	nr_rows = 10_000
-	normalisation = '+mean/std'
+	normalisation = 'minmax10'
 	# print(model)
 	dset = CustomSQLDataset(norm_method=normalisation)
 	splits = get_splits()
@@ -242,7 +242,7 @@ if __name__ == '__main__':
 	fig, ax = plt.subplots()
 
 	import glob
-	for m in glob.glob("*resnet5*.pt"):
+	for m in glob.glob("*kann2.pt"):
 		try:
 			model = torch.load(m)
 			if isinstance(model, dict):

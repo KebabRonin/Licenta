@@ -23,7 +23,7 @@ class InteractiveLegend(object):
             artist.set_picker(10) # 10 points tolerance
 
         self.fig.canvas.mpl_connect('pick_event', self.on_pick)
-        self.fig.canvas.mpl_connect('button_press_event', self.on_click)
+        self.fig.canvas.mpl_connect('key_press_event', self.on_click)
 
     def _build_lookups(self, legend):
         labels = [t.get_text() for t in legend.texts]
@@ -54,9 +54,9 @@ class InteractiveLegend(object):
             self.update()
 
     def on_click(self, event):
-        if event.button == 3:
+        if event.key == 'h':
             visible = False
-        elif event.button == 2:
+        elif event.key == 'g':
             visible = True
         else:
             return
@@ -77,7 +77,21 @@ class InteractiveLegend(object):
     def show(self):
         plt.show()
 
-d = dill.load(open('model.pickle', 'rb'))
+d = dill.load(open('../impl/r2scores.dill', 'rb'))
 
-for mname in d:
-	plt.plot(d[mname], label=mname)
+fig, ax = plt.subplots()
+for mname in sorted(d.keys()):
+    ax.plot(d[mname], label=mname)
+    print(mname)
+
+ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1),
+        ncol=2, borderaxespad=0)
+fig.subplots_adjust(right=0.55)
+fig.suptitle('Right-click to hide all\nMiddle-click to show all',
+            va='top', size='large')
+leg = interactive_legend()
+plt.axis((0, 367, -0.5, 1.2))
+plt.xticks([0, 60, 120, 180, 240, 300, 360], ['ptend_t', 'ptend_q0001', 'ptend_q0002', 'ptend_q0003', 'ptend_u', 'ptend_v', 'cam_out'])
+plt.grid()
+# plt.legend()
+plt.show()

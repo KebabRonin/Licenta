@@ -14,15 +14,17 @@ out_schema=weights.schema
 weights = weights.to_numpy()[0]
 print("Read data")
 
-batch_size = 6_250
+batch_size = 2_500
 model = cloudpickle.load(open("gmm_model.pickle", 'rb'))
 submission = pl.concat([pl.DataFrame(model.predict(
 		np.array([i for i in range(len(in_vars))]), test.slice(i, batch_size).to_numpy()
-	), schema=out_schema) for i in trange(0, dlen, batch_size)])
+	), schema=out_schema) for i in trange(0, dlen, batch_size, desc='batches')])
 submission.insert_column(0, sample_ids)
-print(submission)
 # submission = model.predict(np.array([i for i in range(test.shape[1])]), test.to_numpy())
 submission.write_parquet("GMM/submission.parquet")
+
+sys.stdout.reconfigure(encoding='utf-8')
+print(submission)
 
 del submission
 

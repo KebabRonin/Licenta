@@ -65,11 +65,13 @@ zeroed_vars = expand_vars(zeroed_vars_e)
 non_zeroed_out_vars = [v for v in out_vars if v not in zeroed_vars]
 all_vars = ["sample_id"] + in_vars + out_vars
 
+
 # for plots
 in_ticks = ([0, 60, 120, 180, 240, 300, 360, 376, 436, 496], ['state_t', 'state_q0001', 'state_q0002', 'state_q0003', 'state_u', 'state_v', 'cam', 'pbuf_ozone', 'pbuf_CH4', 'pbuf_N2O'])
 out_ticks = ([0, 60, 120, 180, 240, 300, 360], ['ptend_t', 'ptend_q0001', 'ptend_q0002', 'ptend_q0003', 'ptend_u', 'ptend_v', 'cam_out'])
 
 data_insights = json.load(open("data_insights.json"))
+const_out_vars = [v for v in out_vars if data_insights[v]["std_dev"] == 0]
 
 in_means = np.array([data_insights[v]["mean"] for v in in_vars])
 out_means = np.array([data_insights[v]["mean"] for v in out_vars])

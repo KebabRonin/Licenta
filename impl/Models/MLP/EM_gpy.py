@@ -84,82 +84,87 @@ class ExactGPModel(gpytorch.models.ExactGP):
         covar_x = self.covar_module(x)
 
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
-model = ExactGPModel(train_x, train_y, likelihood)
+def train():
+    model = ExactGPModel(train_x, train_y, likelihood)
 
-# train(model, train_x, train_y, n_iter=5)
-# Find optimal model hyperparameters
-model.train()
-likelihood.train()
+    # train(model, train_x, train_y, n_iter=5)
+    # Find optimal model hyperparameters
+    model.train()
+    likelihood.train()
 
-# Use the adam optimizer
-optimizer = torch.optim.Adam(model.parameters(), lr=0.1)  # Includes GaussianLikelihood parameters
+    # Use the adam optimizer
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.1)  # Includes GaussianLikelihood parameters
 
-# optimizer = torch.optim.RAdam(model.parameters())  # Includes GaussianLikelihood parameters
+    # optimizer = torch.optim.RAdam(model.parameters())  # Includes GaussianLikelihood parameters
 
-# "Loss" for GPs - the marginal log likelihood
-mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
+    # "Loss" for GPs - the marginal log likelihood
+    mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
 
-var = 4
+    var = 4
 
-training_iter = 10
-for i in range(training_iter):#, desc='Training iters'):
-    # Zero gradients from previous iteration
-    optimizer.zero_grad()
-    # Output from model
-    output = model(train_x)
-    # print(output.shape)
-    # Calc loss and backprop gradients
-    loss = -mll(output, train_y[:, var]).sum()
-    loss.backward()
-    print('Iter %d/%d - Loss: %.3f' % (i + 1, training_iter, loss.item()))
-    optimizer.step()
+    training_iter = 10
+    for i in range(training_iter):#, desc='Training iters'):
+        # Zero gradients from previous iteration
+        optimizer.zero_grad()
+        # Output from model
+        output = model(train_x)
+        # print(output.shape)
+        # Calc loss and backprop gradients
+        loss = -mll(output, train_y[:, var]).sum()
+        loss.backward()
+        print('Iter %d/%d - Loss: %.3f' % (i + 1, training_iter, loss.item()))
+        optimizer.step()
 
-cloudpickle.dump(model, open("gp_model.pickle", 'wb'))
-print("Saved, now validating")
-batch = trs[-1]
-sqldloader = DataLoader(batch, num_workers=0,
-	batch_sampler=tdata.BatchSampler(tdata.SequentialSampler(batch), batch_size=5, drop_last=False), #
-	collate_fn=identity)
-valid_x, valid_y = next(iter(sqldloader))
-# Make predictions
-model.eval()
-with torch.no_grad():
-    observed_pred = likelihood(model(valid_x))
-    # Get mean
-    mean = observed_pred.mean
-    print(mean)
-    # Get lower and upper confidence bounds
-    lower, upper = observed_pred.confidence_region()
+    cloudpickle.dump(model, open("gp_model.pickle", 'wb'))
+    print("Saved")
+def valid():
+    model = cloudpickle.load(open("gp_model.pickle", 'rb'))
+    batch = trs[-1]
+    sqldloader = DataLoader(batch, num_workers=0,
+        batch_sampler=tdata.BatchSampler(tdata.SequentialSampler(batch), batch_size=5, drop_last=False), #
+        collate_fn=identity)
+    valid_x, valid_y = next(iter(sqldloader))
+    # Make predictions
+    model.eval()
+    with torch.no_grad():
+        observed_pred = likelihood(model(valid_x))
+        # Get mean
+        mean = observed_pred.mean
+        print(mean)
+        # Get lower and upper confidence bounds
+        lower, upper = observed_pred.confidence_region()
 
-f, ((y1_ax, y2_ax), (y3_ax, y4_ax)) = plt.subplots(2, 2, figsize=(8, 8))
-# Plot training data as black stars
-y1_ax.plot(train_x[0].detach().numpy(), train_y[0].detach().numpy(), 'k*')
-# Predictive mean as blue line
-y1_ax.plot(valid_x[0].squeeze().numpy(), mean[0, :].numpy(), 'b')
-# Shade in confidence
-y1_ax.fill_between(valid_x[0].squeeze().numpy(), lower[0, :].numpy(), upper[0, :].numpy(), alpha=0.5)
-y1_ax.set_ylim([-3, 3])
-y1_ax.legend(['Observed Data', 'Mean', 'Confidence'])
-y1_ax.set_title('Observed Values (Likelihood)')
+    f, ((y1_ax, y2_ax), (y3_ax, y4_ax)) = plt.subplots(2, 2, figsize=(8, 8))
+    # Plot training data as black stars
+    y1_ax.plot(train_x[0].detach().numpy(), train_y[0].detach().numpy(), 'k*')
+    # Predictive mean as blue line
+    y1_ax.plot(valid_x[0].squeeze().numpy(), mean[0, :].numpy(), 'b')
+    # Shade in confidence
+    y1_ax.fill_between(valid_x[0].squeeze().numpy(), lower[0, :].numpy(), upper[0, :].numpy(), alpha=0.5)
+    y1_ax.set_ylim([-3, 3])
+    y1_ax.legend(['Observed Data', 'Mean', 'Confidence'])
+    y1_ax.set_title('Observed Values (Likelihood)')
 
-y2_ax.plot(train_x[1].detach().numpy(), train_y[1].detach().numpy(), 'k*')
-y2_ax.plot(valid_x[1].squeeze().numpy(), mean[1, :].numpy(), 'b')
-y2_ax.fill_between(valid_x[1].squeeze().numpy(), lower[1, :].numpy(), upper[1, :].numpy(), alpha=0.5)
-y2_ax.set_ylim([-3, 3])
-y2_ax.legend(['Observed Data', 'Mean', 'Confidence'])
-y2_ax.set_title('Observed Values (Likelihood)')
+    y2_ax.plot(train_x[1].detach().numpy(), train_y[1].detach().numpy(), 'k*')
+    y2_ax.plot(valid_x[1].squeeze().numpy(), mean[1, :].numpy(), 'b')
+    y2_ax.fill_between(valid_x[1].squeeze().numpy(), lower[1, :].numpy(), upper[1, :].numpy(), alpha=0.5)
+    y2_ax.set_ylim([-3, 3])
+    y2_ax.legend(['Observed Data', 'Mean', 'Confidence'])
+    y2_ax.set_title('Observed Values (Likelihood)')
 
-y3_ax.plot(train_x[2].detach().numpy(), train_y[2].detach().numpy(), 'k*')
-y3_ax.plot(valid_x[2].squeeze().numpy(), mean[2, :].numpy(), 'b')
-y3_ax.fill_between(valid_x[2].squeeze().numpy(), lower[2, :].numpy(), upper[2, :].numpy(), alpha=0.5)
-y3_ax.set_ylim([-3, 3])
-y3_ax.legend(['Observed Data', 'Mean', 'Confidence'])
-y3_ax.set_title('Observed Values (Likelihood)')
+    y3_ax.plot(train_x[2].detach().numpy(), train_y[2].detach().numpy(), 'k*')
+    y3_ax.plot(valid_x[2].squeeze().numpy(), mean[2, :].numpy(), 'b')
+    y3_ax.fill_between(valid_x[2].squeeze().numpy(), lower[2, :].numpy(), upper[2, :].numpy(), alpha=0.5)
+    y3_ax.set_ylim([-3, 3])
+    y3_ax.legend(['Observed Data', 'Mean', 'Confidence'])
+    y3_ax.set_title('Observed Values (Likelihood)')
 
-y4_ax.plot(train_x[3].detach().numpy(), train_y[3].detach().numpy(), 'k*')
-y4_ax.plot(valid_x[3].squeeze().numpy(), mean[3, :].numpy(), 'b')
-y4_ax.fill_between(valid_x[3].squeeze().numpy(), lower[3, :].numpy(), upper[3, :].numpy(), alpha=0.5)
-y4_ax.set_ylim([-3, 3])
-y4_ax.legend(['Observed Data', 'Mean', 'Confidence'])
-y4_ax.set_title('Observed Values (Likelihood)')
-plt.show()
+    y4_ax.plot(train_x[3].detach().numpy(), train_y[3].detach().numpy(), 'k*')
+    y4_ax.plot(valid_x[3].squeeze().numpy(), mean[3, :].numpy(), 'b')
+    y4_ax.fill_between(valid_x[3].squeeze().numpy(), lower[3, :].numpy(), upper[3, :].numpy(), alpha=0.5)
+    y4_ax.set_ylim([-3, 3])
+    y4_ax.legend(['Observed Data', 'Mean', 'Confidence'])
+    y4_ax.set_title('Observed Values (Likelihood)')
+    plt.show()
+
+valid()

@@ -1,44 +1,59 @@
-import polars as pl, numpy as np, os
-from tqdm import tqdm
-import utils, pickle, torch
-from catboost import CatBoostRegressor
+import polars as pl, torch
+# from torcheval.metrics.functional import r2_score
 from torchmetrics.regression import R2Score
+import utils.dset as ds, utils.nn as nns
+from utils.data import *
+import sys, json, glob
+import catboost, tqdm
+sys.stdout.reconfigure(encoding='utf-8')
+torch.set_default_dtype(torch.float64)
+# model = torch.load('model.pt')
+ddddd = ds.get_splits('standardisation', dset_class=ds.SQLDataset, fraction=0.02)
+print(len(ddddd))
+ins, outs = ddddd[-4].__getitems__(range(19_200))
+model = catboost.CatBoostRegressor()
 
-# cat_params = {
-# 	'iterations': 10_000,
-# 	'depth': 7,
-# 	'task_type' : "GPU",
-# 	'use_best_model': True,
-# 	'eval_metric': 'R2', # R2Score(num_outputs=368).to('cuda'),
-# 	'early_stopping_rounds': 300,
-# 	# 'learning_rate': 0.01,
-# 	'border_count': 32,
-# 	'l2_leaf_reg': 3,
-# 	# 'logging_level':"Verbose",
-# 	'metric_period':500,
-# }
+r2score = R2Score(num_outputs=1).to('cuda') #, multioutput="raw_values"
 
-# for var_name in tqdm(utils.data.out_vars):
-# 	# if f"{var_name}_model.cbm" in os.listdir("CatBoostModel"):
-# 	# 	continue
-# 	print(var_name)
-# 	model = CatBoostRegressor(**cat_params)
-# 	model.fit(train_in, train_out.select(pl.col(var_name)).to_numpy(), eval_set=(valid_in, valid_out.select(pl.col(var_name)).to_numpy()))
-# 	model.save_model(f"CatBoostModel/{var_name}_model.cbm")
-# 	print(f"saved {var_name}")
+r2tot = 0
+nrvars = 0
+# for sample, a in (zip(ins.iter_rows(), outs.iter_rows())):
+scores = []
+preds = []
+for var in tqdm.tqdm(out_vars):
+	print(var, list(filter(lambda x: f'{var}_' in x, glob.glob("../impl/CatBoostModel7/*_model.cbm"))))
+	if var in ['ptend_q0002_17','ptend_q0002_18'] or len(list(filter(lambda x: f'{var}_' in x, glob.glob("../impl/CatBoostModel7/*_model.cbm")))) == 0:
+		outs_var = torch.tensor(outs[:, out_vars.index(var)].squeeze())
+		prediction = torch.zeros_like(outs_var)
+		preds.append(prediction)
+		# r2 = r2score(prediction, outs_var)
+		# scores.append(r2.cpu().item())
+	else:
+		model.load_model(f"../impl/CatBoostModel7/{var}_model.cbm")
+		outs_var = torch.tensor(outs[:, out_vars.index(var)].squeeze())
+		prediction = torch.tensor(model.predict(ins))
+		preds.append(prediction)
+		# print(torch.stack(preds, dim=1).shape)
+		# print(prediction)
+		# print(outs_var)
+		# r2 = r2score(prediction, outs_var)
+		# scores.append(r2.cpu().item())
+		# nrvars+= 1
+print("Done")
+import dill
+dill.dump(torch.stack(preds, dim=1), open('rezs/valid2/cb7.dill', 'wb'))
 
-class CatBoost(torch.nn.Module):
-	def __init__(self):
-		super().__init__()
-		self.models = [pickle.load(open(f"../../impl/CatBoostModel/{var_name}_model.cbm", "rb")) for var_name in utils.data.out_vars]
-	def forward(self, x):
-		return np.concatenate([self.models[i].predict(x) for i in range(utils.data.out_len)], axis=0)
-# async def train_batch(xs:torch.Tensor, ys:torch.Tensor, iters=1):
-# 	for _ in range(iters):
-# 		optimizer.zero_grad(set_to_none=True) # changed from False, supposedly better
-# 		pred = model(xs)
-# 		loss = loss_function(pred, ys)
-# 		loss.backward()
-# 		optimizer.step()
-# 		# print(f"Loss:", loss.item())
-# 	return loss.item()
+# import matplotlib.pyplot as plt, dill
+# dill.dump(scores, open('cb8scores.dill', 'wb'))
+# plt.plot(scores)
+# plt.xticks([0, 60, 120, 180, 240, 300, 360], ['ptend_t', 'ptend_q0001', 'ptend_q0002', 'ptend_q0003', 'ptend_u', 'ptend_v', 'cam_out'])
+# plt.grid()
+# plt.show()
+
+# l = valid.select(pl.len()).collect().item()
+# each = int(l/20)
+# for i in valid.iter_slices(each):
+# 	df = valid.slice(i*each, each).cast({v:pl.Float32 for v in (in_vars + out_vars)})
+# 	print(df.slice(0, 1).collect())
+# 	df.collect()
+# 	df.write_parquet("Dataset/train/v3/train_{i}.parquet")

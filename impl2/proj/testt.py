@@ -3,7 +3,7 @@ import utils.dset as dset, utils, utils.nn
 import seaborn as sb, numpy as np
 import torch.utils.data as tdata
 from torchmetrics.regression import R2Score
-import torch, dill
+import torch, dill, cloudpickle
 import tqdm
 
 
@@ -38,15 +38,17 @@ def test(model, ins, outs):
 	return loss_values
 
 def load_model(path):
-	d = dill.load(open(path, 'rb'), ignore=True)
-	if 'train losses' in d.keys():
-		d['train_losses'] = d.pop('train losses')
-	d['optimizer'] = getattr(torch.optim, d['optimizer'])(d['model'].parameters())
-	if d['loss'] == 'R2Score':
-		d['loss'] = R2Score(num_outputs=utils.data.out_len).to(utils.nn.device)
-	else:
-		d['loss'] = getattr(torch.nn, d['loss'])().to(utils.nn.device)
-	return d
+	try:
+		model = dill.load(open(path, 'rb'), ignore=True)
+	except:
+		try:
+			model= cloudpickle.load(open(path, 'rb'))
+		except:
+			model = torch.load(path)
+	if isinstance(model, dict):
+		d = model
+		model = d['model']
+	return model
 def plot_correlation(test_in, test_out):
 	xticks, yticks = utils.data.in_ticks, utils.data.out_ticks
 
@@ -74,34 +76,35 @@ def plot_distr(test_in, test_out):
 if __name__ == '__main__':
 	torch.set_default_dtype(torch.float64)
 	# d = load_model('Models/resnet_parallel/model_checkpoint_batch_4_epoch_4.pickle')
-	batches=2
+	batches=50
 	import matplotlib.pyplot as plt
 	#d['norm_method']
-	trs = dset.get_splits('minmax100', dset_class=dset.TimestepSQLDataset, fraction=0.05)
+	trs = dset.get_splits('standardisation', dset_class=dset.TimestepSQLDataset, fraction=0.02)
 
-	test_in, test_out = next(iter(tdata.DataLoader(trs[-1], batch_size=batches, drop_last=False, collate_fn=utils.nn.identity)))
+	test_in, test_out = next(iter(tdata.DataLoader(trs[-3], batch_size=batches, drop_last=False, collate_fn=utils.nn.identity)))
 
 	# plot_correlation(test_in, test_out)
 	# plt.hist(test_in.cpu().numpy()[:, 0], bins=100)
 	# plt.stackplot(range(556), test_in.cpu().numpy()[0, :])
 	# plt.show()
 	# exit()
-	# model = torch.load('../impl/model.pt')
-	model = load_model('Models/kan/model_checkpoint_batch_4_epoch_29.pickle')
+	# model = load_model('Models/kann/model_checkpoint_batch_0_epoch_41.pickle')
+	model = load_model(r'I:/Licenta/models/model-optuna-smoothl1.pt')
 	if isinstance(model, dict):
 		d = model
 		model = d['model'].to(utils.nn.device)
 
-	errs = test(model, test_in, test_out)
-	print(errs.mean())
-	print(torch.tensor(list(filter(lambda x: x > 0, errs))).mean())
+	# errs = test(model, test_in, test_out)
+	# print(errs.mean())
+	# print(torch.tensor(list(filter(lambda x: x > 0, errs))).mean())
 
-	plt.plot(errs, label=f'')
-	plt.axis((0, 367, -0.5, 1.1))
-	xticks = utils.data.out_ticks
-	plt.xticks(*xticks, ha='left')
-	plt.grid()
-	plt.show()
+	# plt.plot(errs, label=f'')
+	# plt.axis((0, 367, -0.5, 1.1))
+	# xticks = utils.data.out_ticks
+	# plt.xticks(*xticks, ha='left')
+	# plt.grid()
+	# # plt.yscale('symlog')
+	# plt.show()
 
 	r2score = R2Score(num_outputs=utils.data.out_len).to(utils.nn.device)
 	model.eval()
@@ -120,7 +123,7 @@ if __name__ == '__main__':
 
 		m = Basemap(projection='robin',lon_0=0,resolution='c')
 		x,y = m(grid.lon,grid.lat)
-		c = 'ptend_q0001_40'
+		# c = 'ptend_q0001_40'
 		m.drawcoastlines(linewidth=0.5)
 		plot = plt.tricontourf(x,y,losses,cmap='viridis',levels=14)
 		m.colorbar(plot)

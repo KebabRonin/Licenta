@@ -69,7 +69,7 @@ class TimestepSQLDataset(Dataset):
 import torch, torch.utils.data as tdata
 
 VALID_RESERVE=2
-def get_splits(norm_method, dset_class=SQLDataset, fraction=0.05):
+def get_splits(norm_method, dset_class=SQLDataset, fraction=0.02):
 	dset = dset_class(norm_method)
 	splits = [fraction for _ in range(int(1//fraction))]
 	splits += [1 - sum(splits)]

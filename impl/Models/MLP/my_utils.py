@@ -148,8 +148,7 @@ preprocess_functions = {
 	"none": {"norm": preprocess_none, "denorm": preprocess_denone},
 }
 VALID_RESERVE=2
-def get_splits():
-	fraction = 0.05
+def get_splits(fraction = 0.02):
 	splits = [fraction for _ in range(int(1//fraction))]
 	splits += [1 - sum(splits)]
 	return splits
